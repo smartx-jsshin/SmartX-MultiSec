@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 
 //Route for Flow Rules View
-app.get('/flowrulesviewops', function(req, res){
+router.get('/flowrulesviewops', function(req, res){
     console.log('Flow Rules and Statistics View Rendering');
     //res.render('flowrulesviewops.jade', {title: 'Flow-Centric View'})
     var boxList         = null;
@@ -62,7 +62,7 @@ app.get('/flowrulesviewops', function(req, res){
 });
 
 // Route for Flow Path Tracing View
-app.get('/flowtracingviewops/*', function(req, res){
+router.get('/flowtracingviewops/*', function(req, res){
 	//Wait for 1 minute before requesting again
 	req.connection.setTimeout(60*1000);
 	
@@ -124,7 +124,7 @@ app.get('/flowtracingviewops/*', function(req, res){
 });
 
 // Route for Flows/Playground Measurements View
-app.get('/flowmeasureviewops', function(req, res){
+router.get('/flowmeasureviewops', function(req, res){
     console.log('Flow Measure View Rendering');
     //res.render('flowcentricviewops.jade', {title: 'Flow-Centric View'})
     var boxList         = null;
@@ -178,7 +178,7 @@ app.get('/flowmeasureviewops', function(req, res){
 });
 
 // Route for Packets/Box IO-Visor View
-app.get('/flowiovisorviewops', function(req, res){
+router.get('/flowiovisorviewops', function(req, res){
     //res.render('flowiovisorviewops.jade', {title: 'Flow-Centric View'})
     var boxList         = null;
     var switchList      = null;
@@ -231,7 +231,7 @@ app.get('/flowiovisorviewops', function(req, res){
 });
 
 // Route for TCP Throughput-based Data API
-app.get('/getamdatatcpperDay/', function(req, res){
+router.get('/getamdatatcpperDay/', function(req, res){
     //Wait for 1 minute before requesting again
 	req.connection.setTimeout(60*1000);
 	

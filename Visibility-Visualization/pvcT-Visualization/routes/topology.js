@@ -13,7 +13,7 @@ router.get('/tcptopologyviewops', function(req, res){
         if(boxList !== null){
             console.log('Topology Visualization Rendering.');
 			//console.log(boxList);
-            res.render('tcptopologyviewops.jade', { title: 'Playground Topology View', boxList: JSON.stringify(boxList) });
+            res.render('topology/tcptopologyviewops.pug', { title: 'Playground Topology View', boxList: JSON.stringify(boxList) });
         }
     }
 });

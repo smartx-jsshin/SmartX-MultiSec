@@ -1,6 +1,11 @@
 sessionStorage.removeItem('ss_user_name');
 sessionStorage.removeItem('ss_role');
 
+// Need to separate the below variables
+// Visibility Center IP Address
+// TCP port for authentication
+// 
+
 $(document).ready(function () {
     var animating = false;
     var submitPhase1 = 1100;
@@ -34,17 +39,18 @@ $(document).ready(function () {
 
         var name = $("#name").val();
         var pass = $("#pass").val();
-        var check = true;
 
         try {
-            var server = io.connect('http://103.22.221.55:8080');
+            var authUrl = "http://" + vCenterHost + ":" + vCenterAuthPort;
+            var server = io.connect(authUrl);
         } catch (e) {
             alert('Sorry, we couldn\'t connect. Please try again later \n\n' + e);
         }
 
         if (server !== undefined) {
             console.log("Connection established...");
-        
+            console.log("Sending Login Request: " + name + " / " + pass);
+
             // send the values to the server
             server.emit('login', {
                 user_name: name,
@@ -57,10 +63,13 @@ $(document).ready(function () {
                 location.reload();
             });
 
-            server.on('redirect', function (msg) {
-                sessionStorage.setItem('ss_user_name', name);
-                sessionStorage.setItem('ss_role', msg);
-                window.location.assign('http://103.22.221.55:3006/menu');
+            server.on('loginSuccess', function (msg) {
+                sessionStorage.setItem('ss_user_name', msg.name);
+                sessionStorage.setItem('ss_role', msg.role);
+                console.log(msg.name);
+                console.log(msg);
+                var nextUrl = "http://" + vCenterHost + ":" + vCenterPort + "/" + msg.nextPage;
+                window.location.assign(nextUrl);
             });
         }
 

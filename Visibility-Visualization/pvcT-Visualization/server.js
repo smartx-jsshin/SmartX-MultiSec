@@ -2,53 +2,53 @@
  * Module dependencies.
  */
 
-var http = require("http");
+// var http = require("http");
 var express = require('express');
-var async = require('async');
+// var async = require('async');
 var path = require('path')
-
-var favicon = require('serve-favicon')
+// var favicon = require('serve-favicon')
 var logger = require('morgan')
-var methodOverride = require('method-override')
+// var methodOverride = require('method-override')
 var session = require('express-session')
 var bodyParser = require('body-parser')
-var multer = require('multer')
+// var multer = require('multer')
 var errorHandler = require('errorhandler')
 
-var BoxProvider = require('./MultiView-DataAPI').BoxProvider;
-var client = require('socket.io').listen(8080).sockets;
-var host = "";
+var resourceProvider = require('./MultiView-DataAPI').ResourceProvider;
+var vCenterConfig = require('./MultiView-DataAPI').VisibilityCenterConfig;
+var playgroundConfig = require('./MultiView-DataAPI').PlaygroundConfig;
 
+//
+//Express App Setting
+//
 var app = express();
-
 app.set('view engine', 'pug');
 app.use(express.json());
 app.use(logger('dev'))
-app.use(methodOverride());
+// app.use(methodOverride());
 app.use(require('stylus').middleware({ src: __dirname + '/public' }));
-app.set('views', path.join(__dirname, '/views'))
+app.set('views', path.join(__dirname, '/views'));
 app.use(session({ resave: true,
                   saveUninitialized: true,
-                  secret: 'uwotm8' }))
+                  secret: 'uwotm8' }));
 //app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.urlencoded({ extended: true }));
 //app.use(multer())
-app.use(express.static(path.join(__dirname, '/public')))
-//Before starting application run below command in public directory
-//ln -s /opt/KONE-MultiView/pvcT-Visualization/node_modules/ /opt/KONE-MultiView/pvcT-Visualization/public/
+app.use("/public", express.static(path.join(__dirname, '/public')));
+app.use("/node_modules", express.static(path.join(__dirname, "node_modules")));
 
-//Define Application Routes
-var resourceProvider = new ResourceProvider();
-
+//
+// Loading Routers for visualization types
+//
 var playgroundTopologyRouter = require('./routes/topology');
-var controllerRouter = require('./routes/controller');
-var resourceLayerRouter = require('./routes/resource');
-var sliceLayerRouter = require('./routes/slice');
-var flowLayerRouter = require('./routes/flow');
-var workloadLayerRouter = require('./routes/workload');
-var onionRingRouter = require('./routes/onionring');
+// var controllerRouter = require('./routes/controller');
+// var resourceLayerRouter = require('./routes/resource');
+// var sliceLayerRouter = require('./routes/slice');
+// var flowLayerRouter = require('./routes/flow');
+// var workloadLayerRouter = require('./routes/workload');
+// var onionRingRouter = require('./routes/onionring');
 
-//app.use('/layer/resource', resourceLayerRouter);
+app.use('/topology', playgroundTopologyRouter);
 
 
 //the dictionary key is user name and value is
@@ -56,19 +56,29 @@ var userwithip = null;
 
 // Route for Login View
 app.get('/', function(req, res){
-    res.redirect('/login');
+    // resourceProvider.getUsers( function(err, listusers){
+    //     res.render('test.pug', {userlist: listusers});
+    // });
+    res.redirect("/login");
 });
 
 // Route for Menu View
 app.get('/menu', function(req, res){
     console.log('Menu Rendering');
-	userwithip = {name:username , ip : req.connection.remoteAddress};
-	console.log(userwithip);
-	res.render('menu.jade',{locals: {}, title: 'Multi-View Menu'})
+    res.render('menu.pug',{
+        locals: {}, 
+        title: 'Multi-View Menu',
+        onionRingUrl: "http://" + vCenterConfig.getHost() + ":" + vCenterConfig.getPort() + "/onionringviewops"
+    })
 });
 
 app.get('/login', function(req, res){
-    res.render('login.jade',{ title: 'MultiView Login'})
+    res.render('login.pug',{
+        title: 'MultiView Login',
+        vCenterHost: vCenterConfig.getHost(),
+        vCenterPort: vCenterConfig.getPort(),
+        vCenterAuthPort: vCenterConfig.getAuthPort()
+    })
 });
 
 // error handling middleware should be loaded after the loading the routes
@@ -76,7 +86,12 @@ if (app.get('env') === 'production') {
   app.use(errorHandler())
 }
 
-// Web Autentication & Validation
+
+// Web authentication at server side (by using socket.io libray)
+// ToDo: Replace this code to use PassportJS library
+// https://steemit.com/utopian-io/@upmeboost/nodejs--socketio--creating-a-login-system-nvlrmaoy
+
+var client = require('socket.io').listen(8080).sockets;
 client.on('connection', function (socket) {
     socket.on('login', function(login_info){
         var this_user_name = login_info.user_name,
@@ -84,23 +99,25 @@ client.on('connection', function (socket) {
         if (this_user_name === '' || this_user_password === '') {
                 socket.emit('alert', 'You must fill in both fields');
         } else {
-            resourceProvider.getUsers(function (err, listusers){
+            resourceProvider.getUsers(function (err, listUsers){
                 if(err) throw err;
-                var found = false,
+                var found = false;
                     location =-1;
-                  if (listusers.length) {
-                        for (var i in listusers) {
-                            if (listusers[i].username === this_user_name) {
+                  if (listUsers.length) {
+                        for (var i in listUsers) {
+                            if (listUsers[i].username === this_user_name) {
                                 found = true;
-                                if (listusers[i].password === this_user_password) {
+                                if (listUsers[i].password === this_user_password) {
                                     //todo: get priority and send to menu page.
-									username = this_user_name;
-                                    if(listusers[i].role === 'operator'){
-                                        socket.emit('redirect', 'operator');
-                                    }
-                                    else{
-                                        socket.emit('redirect', 'developer');
-                                    }
+                                    username = this_user_name;
+
+                                    var resp = {};
+                                    resp.name = listUsers[i].username;
+                                    resp.role = listUsers[i].role;
+                                    resp.nextPage = "menu";
+                                    console.log(resp);
+                                    socket.emit("loginSuccess", resp);
+
                                 } else {
                                     socket.emit('alert', 'Please retry password');
                                 }

@@ -1,0 +1,137 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    meta(name='description', content='')
+    meta(name='author', content='')
+    
+    link(href='/public/bower_components/bootstrap/dist/css/bootstrap.min.css', rel='stylesheet')
+    link(href='/node_modules/metismenu/dist/metisMenu.min.css', rel='stylesheet')
+    link(href='/node_modules/startbootstrap-sb-admin-2/css/sb-admin-2.css', rel='stylesheet', type='text/css')
+    link(href='/node_modules/font-awesome/css/font-awesome.min.css', rel='stylesheet', type='text/css')
+    script(src='/node_modules/html5shiv/dist/html5shiv.js')
+    script(src='/node_modules/responder/lib/responder.js')
+
+    script(type='text/javascript').
+      var vCenterHost="#{vCenterHost}";
+      var vCenterPort="#{vCenterPort}";
+      var onionRingUrl = "http://" + vCenterHost + ":" + vCenterPort + "/onionringviewops";
+
+    script(type='text/javascript' src="/public/javascripts/menuPage.js")
+
+  body(onload='draw()')
+    #wrapper(style='width: 1430px;')
+      // Navigation
+      nav.navbar.navbar-default.navbar-static-top(role='navigation', style='margin-bottom: 0')
+        .navbar-header(style='background-color:#e0e0d1;width: 1460px; height: 50px; display:inline-block')
+          button.navbar-toggle(type='button', data-toggle='collapse', data-target='.navbar-collapse')
+            span.sr-only Toggle navigation
+            span.icon-bar
+            span.icon-bar
+            span.icon-bar
+          p
+          #titlediv
+            b
+              h1(style='color:#ff8000;font-family:verdana;text-align:center;display:inline;') SmartX Multi-View Dashboard
+          p
+        .navbar-default.sidebar(role='navigation')
+          .sidebar-nav.navbar-collapse
+            ul#side-menu.nav
+              li.sidebar-search(style='background-color:#e0e0d1;font-size:12;color:#737373;text-align:center;width: 250px; height: 40px;')
+                #usertext.input-group.custom-search-form
+              li
+                a(href='#', style='background-color:#eaeae1;color:#3c3c2a;')
+                  i.fa.fa-bookmark.fa-fw
+                  | Topology Visualization
+                  span.fa.arrow
+                ul#parent-list.nav.nav-second-level(style='background-color:#ffffff;')
+                  li
+                    a#tcptopology(href='#', style='background-color:#ffffff;') Topology View
+              li
+                a(href='#', style='background-color:#eaeae1;color:#3c3c2a;')
+                  i.fa.fa-bookmark.fa-fw
+                  | Onion-ring-based Visualization
+                  span.fa.arrow
+                ul#parent-list.nav.nav-second-level(style='background-color:#ffffff;')
+                  li
+                    a#onionops(href='#', style='background-color:#ffffff;') Operator Visualization
+                  li
+                    a#oniontenant(href='#', style='background-color:#ffffff;') Tenant Visualization
+              li
+                a(href='#', style='background-color:#eaeae1;color:#3c3c2a;')
+                  i.fa.fa-bookmark.fa-fw
+                  | Network-based Visualization
+                  span.fa.arrow
+                ul#parent-list.nav.nav-second-level(style='background-color:#ffffff;')
+                  li
+                    a#resourcecentricviewops(href='#', style='background-color:#ffffff;') Playground View
+                  li
+                    a#flowrulesviewops(href='#', style='background-color:#ffffff;') vSwich-Flows Info
+                  li
+                    a#flowtracingviewops(href='#', style='background-color:#ffffff;') Inter-connected Flow Path
+              li
+                a(href='#', style='background-color:#eaeae1;color:#3c3c2a;')
+                  i.fa.fa-bookmark.fa-fw
+                  | Slicing Visualization
+                  span.fa.arrow
+                ul#parent-list.nav.nav-second-level(style='background-color:#ffffff;')
+                  li
+                    a#slicingviewops(href='#', style='background-color:#ffffff;') Infrastructure Slicing 
+              li
+                a(href='#', style='background-color:#eaeae1;color:#3c3c2a;')
+                  i.fa.fa-bookmark.fa-fw
+                  | Flow-layer Visualization
+                  span.fa.arrow
+                ul#parent-list.nav.nav-second-level(style='background-color:#ffffff;')
+                  li
+                    a#flowmeasureviewops(href='#', style='background-color:#ffffff;') Packets Sampling 
+                  li
+                    a#flowiovisorviewops(href='#', style='background-color:#ffffff;') Packets Tracing 
+              li
+                a(href='#', style='background-color:#eaeae1;color:#3c3c2a;')
+                  i.fa.fa-bookmark.fa-fw
+                  | Workload-layer Visualization
+                  span.fa.arrow
+                ul#parent-list.nav.nav-second-level
+                  li
+                    a#servicecentricviewops(href='#', style='background-color:#ffffff;') Workload-centric View
+              li
+                a(href='login', style='background-color:#ffe6e6;color:#ff0000;')
+                  i.fa.fa-sign-out.fa-fw
+                  b Logout
+      #page-wrapper(style='width: 1210px;')
+        .container-fluid
+          .row
+            .col-lg-12
+              // h1.page-header
+        .row(style='width: 1180px;')
+          .col-lg-12
+            .panel.panel-default
+              #panel-heading-id.panel-heading(style='background-color:#003399;text-align:center')
+                b
+                  p(style='display:inline;font-size:12;color:#e6eeff;text-align:center;') Onion-ring-style Visualization
+              .panel-body
+                p
+                  //- iframe#topoIframe(src="", width='1120', height='800')
+                  //- After refactoring Onion-Ring Visualization, Uncomment the below line.
+                  iframe#topoIframe(src="#{onionRingUrl}", width='1120', height='800')
+        .row(style='width: 1180px;')
+          .col-lg-12
+            .panel.panel-default
+              .panel-heading(style='background-color:#003399;text-align:center')
+                b
+                  p(style='display:inline;font-size:12;color:#e6eeff;text-align:center;') Metrics Visualization Panel
+              .panel-body
+                p
+                  iframe#grafanaIframe(src='', width='1120', height='500')
+    // jQuery
+    //- script(src='/node_modules/jquery/dist/jquery.min.js')
+    script(src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous")
+    // Bootstrap Core JavaScript
+    script(src='/public/bower_components/bootstrap/dist/js/bootstrap.min.js')
+    // Metis Menu Plugin JavaScript
+    script(src='/node_modules/metismenu/dist/metisMenu.min.js')
+    // Custom Theme JavaScript
+    script(src='/node_modules/startbootstrap-sb-admin-2/js/sb-admin-2.js')

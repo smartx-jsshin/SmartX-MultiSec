@@ -4,7 +4,6 @@ if (session_username === null) {
 }
 
 // Receive Active Boxes List
-var boxList = !{ boxList };
 var nodes = null, edges = null, network = null;
 var DIR = 'images/';
 var EDGE_LENGTH_MAIN = 350, EDGE_LENGTH_SUB = 150;
@@ -12,8 +11,18 @@ var BridgeLinkColor = 'BLACK', BridgeNodeColor = '#3399ff';
 var LENGTH_SERVER = 150, LENGTH_SUB = 50, WIDTH_SCALE = 2;
 const GREEN = 'green', RED = '#C5000B', ORANGE = 'orange', GRAY = 'gray', BLACK = '#2B1B17';
 
+function decodeHtmltoJson(text){
+    var textArea = document.createElement('textarea');
+    textArea.innerHTML = text;
+    jsonFromText = JSON.parse(textArea.value)
+    return jsonFromText;
+}
+
 // Called when the Visualization API is loaded.
 function draw() {
+    var boxListJson = decodeHtmltoJson(boxList);
+    console.log(boxListJson);
+
     // Create a data table with nodes.
     nodes = [];
     // Create a data table with links.
@@ -22,16 +31,21 @@ function draw() {
     var srcIDArray = [], destIDArray = [], boxLabel = '';
     var srcMap = new Object();
     var destMap = new Object();
-    for (i = 0; i < boxList.length; i++) {
-        srcIDArray.push(boxList[i].srcBoxID);
-        destIDArray.push(boxList[i].destBoxID);
-        srcMap[boxList[i].srcBoxID] = boxList[i].srcBoxname;
-        destMap[boxList[i].destBoxID] = boxList[i].destBoxname;
+    // console.log(boxList);
+    // console.log(JSON.parse(boxList));
+    for (i = 0; i < boxListJson.length; i++) {
+        // console.log(boxList[i]);
+        
+        srcIDArray.push(boxListJson[i].srcBoxID);
+        destIDArray.push(boxListJson[i].destBoxID);
+        srcMap[boxListJson[i].srcBoxID] = boxListJson[i].srcBoxname;
+        destMap[boxListJson[i].destBoxID] = boxListJson[i].destBoxname;
     }
 
     //Distinct nodes List
     var uniqueNodes = [...new Set([...srcIDArray, ...destIDArray])];
-    console.log(uniqueNodes.length);
+    console.log(uniqueNodes);
+    // console.log(uniqueNodes.length);
     //Draw the Nodes
     for (i = 0; i < uniqueNodes.length; i++) {
         boxLabel = srcMap[uniqueNodes[i]];
@@ -65,24 +79,24 @@ function draw() {
     }
 
     //Draw the Edges
-    for (var i in boxList) {
-        console.log(boxList[i].srcBoxID + ' ' + boxList[i].destBoxID);
+    for (var i in boxListJson) {
+        console.log(boxListJson[i].srcBoxID + ' ' + boxListJson[i].destBoxID);
 
-        if (boxList[i].score <= 20)
+        if (boxListJson[i].score <= 20)
             EDGE_LENGTH_SUB = 80;
-        else if (boxList[i].score > 20 && boxList[i].score <= 40)
+        else if (boxListJson[i].score > 20 && boxListJson[i].score <= 40)
             EDGE_LENGTH_SUB = 120;
-        else if (boxList[i].score > 40 && boxList[i].score <= 60)
+        else if (boxListJson[i].score > 40 && boxListJson[i].score <= 60)
             EDGE_LENGTH_SUB = 160;
-        else if (boxList[i].score > 60 && boxList[i].score <= 80)
+        else if (boxListJson[i].score > 60 && boxListJson[i].score <= 80)
             EDGE_LENGTH_SUB = 200;
         else
             EDGE_LENGTH_SUB = 240;
 
         //	nodes.push({id: boxList[i].srcBoxID, label: boxList[i].srcBoxname, box: boxList[i].srcBoxname, group: 'desktop', value: 3, fixed: false, physics:false, color: BridgeNodeColor});
         edges.push({ 
-            from: boxList[i].srcBoxID, 
-            to: boxList[i].destBoxID, 
+            from: boxListJson[i].srcBoxID, 
+            to: boxListJson[i].destBoxID, 
             arrows: { 
                 to: { 
                     enabled: true, 

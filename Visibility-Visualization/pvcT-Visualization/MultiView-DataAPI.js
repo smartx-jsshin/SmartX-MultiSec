@@ -14,6 +14,8 @@ class ResourceProvider {
 	
 	//Get MultiView Users
 	getUsers(callback) {
+		console.log("[ResourceProvider] getUsers() is called");
+
 		var mongoClient = new MongoClient(this.mongoUrl, { useUnifiedTopology: true });
 
 		var self = this;
@@ -22,8 +24,11 @@ class ResourceProvider {
 
 			var multiviewDb = _mongoClient.db(self.mongoConfig.multiviewDb);
 			var collection = multiviewDb.collection(self.mongoConfig.collectionMap.users);
+			assert.notEqual(null, collection);
 
-			collection.find().toArray(function (err, users) {
+			collection.find({}).toArray(function (err, users) {
+				console.log("[ResourceProvider | getUsers()] Acquired Data: \"");
+				console.log(users);
 				assert.equal(null, err);
 				callback(null, users);
 				_mongoClient.close();
@@ -33,23 +38,27 @@ class ResourceProvider {
 	
 	//Get pBoxes List From MongoDB for TCP throughput-based Topology
 	getTCPTopologyList(callback) {
+		console.log("[ResourceProvider] getTCPTopologyList() is called");
+
 		var mongoClient = new MongoClient(this.mongoUrl, { useUnifiedTopology: true });
 
 		var self = this;
 		mongoClient.connect(function (err, _mongoClient) {
 			assert.equal(null, err);
 
-			console.log('Physical Boxes List: ');
 			var multiviewDb = _mongoClient.db(self.mongoConfig.multiviewDb);
 			var collection = multiviewDb.collection(self.mongoConfig.collectionMap.tcpTopology);
+			assert.notEqual(null, collection);
 
 			collection.find({}, { 
 				srcBoxname: true, destBoxname: true, 
 				srcBoxID: true, destBoxID: true, 
 				value: true, score: true, _id: false 
-			}).sort({ srcBoxID: -1 }).toArray(function (err, users) {
+			}).sort({ srcBoxID: -1 }).toArray(function (err, boxes) {
+				console.log("[ResourceProvider | getTCPTopologyList()] Acquired Data: ");
+				console.log(boxes);
 				assert.equal(null, err);
-				callback(null, users);
+				callback(null, boxes);
 				_mongoClient.close();
 			});
 		});

@@ -34,50 +34,48 @@ app.use(session({ resave: true,
 //app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }));
 //app.use(multer())
-app.use("/public", express.static(path.join(__dirname, '/public')));
-app.use("/node_modules", express.static(path.join(__dirname, "node_modules")));
+app.use("/public", express.static(path.join(__dirname, 'public')));
+app.use("/modules", express.static(path.join(__dirname, "node_modules")));
 
 //
 // Loading Routers for visualization types
 //
-var playgroundTopologyRouter = require('./routes/topology');
+var topologyRouter = require('./routes/topology')(resourceProvider);
 // var controllerRouter = require('./routes/controller');
 // var resourceLayerRouter = require('./routes/resource');
 // var sliceLayerRouter = require('./routes/slice');
 // var flowLayerRouter = require('./routes/flow');
 // var workloadLayerRouter = require('./routes/workload');
-// var onionRingRouter = require('./routes/onionring');
-
-app.use('/topology', playgroundTopologyRouter);
-
+var onionRingRouter = require('./routes/onionring')(resourceProvider);
+app.use('/topology', topologyRouter);
+app.use('/onionring', onionRingRouter);
 
 //the dictionary key is user name and value is
 var userwithip = null;
 
 // Route for Login View
-app.get('/', function(req, res){
-    // resourceProvider.getUsers( function(err, listusers){
-    //     res.render('test.pug', {userlist: listusers});
-    // });
+app.get('/', function(req, res, next){
+    console.log('Route to /');
     res.redirect("/login");
 });
 
-// Route for Menu View
-app.get('/menu', function(req, res){
-    console.log('Menu Rendering');
-    res.render('menu.pug',{
-        locals: {}, 
-        title: 'Multi-View Menu',
-        onionRingUrl: "http://" + vCenterConfig.getHost() + ":" + vCenterConfig.getPort() + "/onionringviewops"
-    })
-});
-
 app.get('/login', function(req, res){
+    console.log('Route to /login');
     res.render('login.pug',{
         title: 'MultiView Login',
         vCenterHost: vCenterConfig.getHost(),
         vCenterPort: vCenterConfig.getPort(),
         vCenterAuthPort: vCenterConfig.getAuthPort()
+    })
+});
+
+// Route for Menu View
+app.get('/menu', function(req, res){
+    console.log('Route to /menu');
+    res.render('menu.pug',{
+        // locals: {}, 
+        vCenterHost: vCenterConfig.getHost(),
+        vCenterPort: vCenterConfig.getPort()
     })
 });
 

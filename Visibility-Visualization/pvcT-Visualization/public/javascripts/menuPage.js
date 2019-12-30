@@ -114,9 +114,11 @@ function showPanel(itemID) {
 
 // Called when the Visualization API is loaded.
 function draw() {
-    document.getElementById('usertext').innerHTML = "Logged In User:  " + session_username;
+    console.log("Start adding event handlers to buttons")
+    // document.getElementById('usertext').innerHTML = "Logged In User:  " + session_username;
+
     //Update********************************************************
-    var iframe1 = document.getElementById('topoIframe');
+    var iframe1 = document.getElementById('firstIFrame');
     // var iframe2 = document.getElementById('grafanaIframe');
     var tcptopology = document.getElementById('tcptopology');
     // var onionops = document.getElementById('onionops');
@@ -132,8 +134,9 @@ function draw() {
     // var sliceviewtenant = document.getElementById('sliceviewtenant');
 
     tcptopology.addEventListener('click', function () {
-        document.getElementById('panel-heading-id').innerHTML = '<b><p style="display:inline;font-size:12;color:#e6eeff;text-align:center;">Playground Overlay Topology View</p></b>';
-        iframe1.src = 'http://' + vCenterHost + ':' + vCenterPort + '/topology/tcptopologyviewops';
+        console.log("TCP Topology Button was clicked");
+        document.getElementById('firstIFrameHeader').innerHTML = "Playground Overlay Topology View";
+        iframe1.src =  rootUrl + '/topology/tcptopologyviewops';
         //iframe2.src = 'http://'+serverIP+':'+serverPort+'/#';
     });
 

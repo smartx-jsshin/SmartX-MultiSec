@@ -25,7 +25,7 @@ module.exports = function(provider){
         }
     });
     
-    // Route for TCP Throughput-based Topology View
+    // Route for Overall Playground Topology View
     router.get('/sitetopology', function(req, res){
         var boxList = null;
         //console.log('Topology Visualization Rendering.');

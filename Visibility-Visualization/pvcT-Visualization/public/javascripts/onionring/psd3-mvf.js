@@ -1,6 +1,12 @@
 /**
- *
+ *  This psd3.js file was customized for SmartX Multi-View Visibility Framework
+ *  We have added / modified below codes
+ *      - Connecting event handlers to onion-ring segments (Addition)
+ *  
+ *  The original file can be found at
+ *  https://github.com/pshivale/psd3/blob/master/psd3.js
  */
+
 var psd3 = psd3 || {};
 psd3.Graph = function(config) {
     var _this = this;

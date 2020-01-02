@@ -21,16 +21,12 @@ html
       background: #ffffff;
       }
 
-    script(src='../bower_components/jquery/dist/jquery.min.js')
-    script(type='text/javascript', src='javascripts/vis.js')
-    link(href='stylesheets/vis.css', rel='stylesheet', type='text/css')
-    link(type='text/css', rel='stylesheet', href='stylesheets/opentip.css')
-    script(type='text/javascript', src='javascripts/opentip-jquery.js')
-
-    script(type='text/javascript').
-      var vCenterHost = "#{vCenterHost}";
-      var vCenterPort = "#{vCenterPort}";
-    script(type='text/javascript', src="javascripts/topology/tcpTopologyViewOpsGraph.js")
+    script(src='/modules/jquery/dist/jquery.min.js')
+    script(type='text/javascript', src='/public/libs/vis.js')
+    link(href='/public/stylesheets/vis.css', rel='stylesheet', type='text/css')
+    link(href='/public/stylesheets/opentip.css', type='text/css', rel='stylesheet')
+    script(type='text/javascript', src='/public/libs/opentip-jquery.js')
+    script(type='text/javascript', src="/public/javascripts/topology/tcpTopologyViewOpsGraph.js")
 
   body(onload='draw()')
     p

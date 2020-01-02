@@ -121,7 +121,7 @@ function draw() {
     var iframe1 = document.getElementById('firstIFrame');
     // var iframe2 = document.getElementById('grafanaIframe');
     var tcptopology = document.getElementById('tcptopology');
-    // var onionops = document.getElementById('onionops');
+    var onionops = document.getElementById('onionops');
     // var oniontenant = document.getElementById('oniontenant');
     // var onion3d = document.getElementById('onion3d');
     // var resource = document.getElementById('resourcecentricviewops');
@@ -140,11 +140,11 @@ function draw() {
         //iframe2.src = 'http://'+serverIP+':'+serverPort+'/#';
     });
 
-    // onionops.addEventListener('click', function () {
-    //     document.getElementById('panel-heading-id').innerHTML = '<b><p style="display:inline;font-size:12;color:#e6eeff;text-align:center;">Onion-ring-based Visualization (Operator)</p></b>';
-    //     iframe1.src = 'http://' + vCenterHost + ':' + vCenterPort + '/onionringviewops';
-    //     //iframe2.src = 'http://'+serverIP+':'+serverPort+'/#';
-    // });
+    onionops.addEventListener('click', function () {
+        document.getElementById('firstIFrameHeader').innerHTML = "Onion-ring-based Visualization (Operator)";
+        iframe1.src = rootUrl + '/onionring/onionring2d';
+        //iframe2.src = 'http://'+serverIP+':'+serverPort+'/#';
+    });
 
     // oniontenant.addEventListener('click', function () {
     //     document.getElementById('panel-heading-id').innerHTML = '<b><p style="display:inline;font-size:12;color:#e6eeff;text-align:center;">Onion-ring-based Visualization (Tenant)</p></b>';

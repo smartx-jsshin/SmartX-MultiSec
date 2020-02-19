@@ -4,6 +4,7 @@ const assert = require('assert');
 
 class ResourceProvider {
 	constructor() {
+		this.playgroundConfig = require("./config.json").playground;
 		this.mongoConfig = require("./config.json").mongodb;
 		this.mongoUrl = 
 			"mongodb://" + this.mongoConfig.userId + ":" + this.mongoConfig.userPassword +
@@ -249,9 +250,47 @@ class ResourceProvider {
 	// 		});
 	// 	});
 	// }
+	
+	_getTopologyDataFromFile(_filename){
+		return new Promise(function(resolve, reject){
+			var _topologyData = require("./public/config/" + _filename);
+			console.log("[ResourceProvider] _getTopologyDataFromFile() is called" );
+			console.log(_topologyData);
+			resolve(_topologyData);
+		});
+	}
 
+	_getLayerStatusData(_layerData){
+		// layerData.tower = tower status
+		// layerData.post = post status
+		// layerData.post.vbox = Status of VMs in Posts
+		// layerData.pbox = K-cube status
+		// layerData.pbox.vbox = status of VMs in K-cubes
+
+		return new Promise(function(resolve, reject){
+			console.log("[ResourceProvider] _getLayerStatusData() is called" );
+			resolve(_layerData);
+		});
+	}
+
+	_setColorToTopology(topology, layerStatus, colorPallete){
+		return;
+	}
+	
 	getOnionRingData(callback){
 		console.log("[ResourceProvider] getOnionRingData() is called");
+
+		const statusPallete = {
+			"notProvisioned": "#EFEFEF", // 
+			"working": "90FF90",
+			"warning": "#FFA500",
+			"failed": "#FF0000"
+		}; // 
+		const tenantPallete = ["#D3D3D3", "#000000", "#0000FF", "#FF0000", "#800080"]; // LightGray (NotAssigned), Black (Operator), blue, red, purple
+		const colorPallete = {
+			statusPallete: statusPallete,
+			tenantPallete: tenantPallete
+		};
 
 		// var mongoClient = new MongoClient(this.mongoUrl, { useUnifiedTopology: true });
 
@@ -276,10 +315,45 @@ class ResourceProvider {
 		// 	});
 		// });
 
-		var testData = require("./test/onionring-dumpdata.json");
-		console.log("[ResourceProvider | getOnionRingData()] Acquired Data: ");
-		console.log(JSON.stringify(testData));
-		callback(null, JSON.stringify(testData));
+		var topologyData;
+		var layerData = [];
+
+		if (this.playgroundConfig.type === "k1"){
+			console.log("[ResourceProvider | getOnionRingData()] Playground Type: K1");
+
+			var self = this;
+			self._getTopologyDataFromFile("topology-k1.scenario2.json")
+			.then( 
+				function(_topologyData){
+					topologyData = _topologyData;
+				}
+			)
+			.then ( self._getLayerStatusData(layerData) )
+			.then ( 
+				function(_layerData){
+					layerData = _layerData;
+				}
+			)
+			.then(
+				new Promise( 
+					function(resolve, reject){
+						self._setColorToTopology (topologyData, layerData, colorPallete);
+						resolve();
+					}
+				)
+			)
+			.then(
+				function(){
+					console.log(topologyData);
+					console.log(layerData);
+					callback(null, JSON.stringify(topologyData))
+				}
+			);
+			
+		} else {
+			this._getTopologyDataFromFile(topologyData, "topology-k1.json")
+			.then(callback(null, JSON.stringify(topologyData)));
+		}
 	}
 
 

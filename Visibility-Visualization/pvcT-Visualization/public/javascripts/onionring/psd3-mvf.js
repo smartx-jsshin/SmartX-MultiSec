@@ -91,13 +91,19 @@ psd3.Pie.prototype.findMaxDepth = function(dataset) {
     }
     var currentLevel;
     var maxOfInner = 0;
+    
+    var hasInnerElements = false;
     for (var i = 0; i < dataset.length; i++) {
         var maxInnerLevel = this.findMaxDepth(dataset[i][this.config.inner]);
         if (maxOfInner < maxInnerLevel) {
             maxOfInner = maxInnerLevel;
         }
+        if (dataset[i].hasOwnProperty("innerElements")){
+            hasInnerElements = true;
+        }
     }
     currentLevel = 1 + maxOfInner;
+    if (hasInnerElements) currentLevel += 1;
     return currentLevel;
 };
 
@@ -200,6 +206,7 @@ psd3.Pie.prototype.draw = function(svg, totalRadius, dataset, originalDataset, o
     _this = this;
     //console.log("**** draw ****");
     //console.log("dataset = " + dataset);
+
     if (dataset === null || dataset === undefined || dataset.length < 1) {
         return;
     }
@@ -225,8 +232,8 @@ psd3.Pie.prototype.draw = function(svg, totalRadius, dataset, originalDataset, o
         //console.log("d.value = " + d.value);
         return d[_this.config.value];
     });
-    pie.startAngle(startAngle)
-        .endAngle(endAngle);
+    pie.startAngle(startAngle + 0.001)
+        .endAngle(endAngle - 0.001);  // Add to start/end angles for clear separation between elements on the same layer
 
     var values = [];
     for (var i = 0; i < dataset.length; i++) {
@@ -241,11 +248,12 @@ psd3.Pie.prototype.draw = function(svg, totalRadius, dataset, originalDataset, o
       //console.log(originalDataset);
         _this.reDrawPie(d, originalDataset);
     };
+
     //this funtion handle acction signle click and return performance chart
     var onclick = function(d){
     // console.log(JSON.stringify(d.data));
     // console.log(d.data);
-    console.log(d.data);
+    // console.log(d.data);
 	if (d.data.label === "SF")
 	{
 		window.parent.receiveSampledFlows(d.data);
@@ -260,8 +268,8 @@ psd3.Pie.prototype.draw = function(svg, totalRadius, dataset, originalDataset, o
     
     // window.alert("Hello");
     };
-    var arc = d3.svg.arc().innerRadius(innerRadius)
-        .outerRadius(outerRadius);
+    var arc = d3.svg.arc().innerRadius(innerRadius+1.5) 
+        .outerRadius(outerRadius-1.5);  // Add Margin to inner/outer Radius for clear separation between layers
     //Set up groups
     _this.arcIndex = _this.arcIndex + 1;
 
@@ -369,17 +377,46 @@ psd3.Pie.prototype.draw = function(svg, totalRadius, dataset, originalDataset, o
         .attr("title", _this.textTitle);
         // console.log(_this.textTitle);
 
-
     //console.log("paths.data() = " + paths.data());
     for (var j = 0; j < dataset.length; j++) {
         //console.log("dataset[j] = " + dataset[j]);
         //console.log("paths.data()[j] = " + paths.data()[j]);
+        var _nextInnerRadius = innerRadius;
+        var _nextOuterRadius = outerRadius;
+
+        if (dataset[j].hasOwnProperty('innerElements')){
+            _nextInnerRadius = innerRadius + radiusDelta;
+            _nextOuterRadius = outerRadius + radiusDelta;
+
+            if (dataset[j]['innerElements'].length !== 0){
+                _this.draw(svg, 
+                    totalRadius, 
+                    dataset[j]['innerElements'], 
+                    originalDataset, 
+                    originalDatasetLength, 
+                    _nextInnerRadius, 
+                    _nextOuterRadius, 
+                    radiusDelta, 
+                    paths.data()[j].startAngle, 
+                    paths.data()[j].endAngle, 
+                    arc.centroid(paths.data()[j]));
+            }
+        }
+
         if (dataset[j][_this.config.inner] !== undefined) {
-            _this.draw(svg, totalRadius, dataset[j][_this.config.inner], originalDataset, originalDatasetLength, innerRadius + radiusDelta, outerRadius + radiusDelta, radiusDelta, paths.data()[j].startAngle, paths.data()[j].endAngle, arc.centroid(paths.data()[j]));
+            _this.draw(svg, 
+                totalRadius, 
+                dataset[j][_this.config.inner], 
+                originalDataset, 
+                originalDatasetLength, 
+                _nextInnerRadius + radiusDelta, 
+                _nextOuterRadius + radiusDelta, 
+                radiusDelta, 
+                paths.data()[j].startAngle, 
+                paths.data()[j].endAngle, 
+                arc.centroid(paths.data()[j]));
         }
     }
-
-
 };
 
 psd3.Pie.prototype.reDrawPie = function(d, ds) {
@@ -393,7 +430,7 @@ psd3.Pie.prototype.reDrawPie = function(d, ds) {
         .remove()
         .each("end", function() {
             if (d.length == 1) {
-              if(d.data.drilldown.length == 0){
+              if(d.data.childElements.length == 0){
               tmp = _this.config.data;
               }
               else{
@@ -404,8 +441,8 @@ psd3.Pie.prototype.reDrawPie = function(d, ds) {
                 tmp.push(d.data);
                 _this.zoomStack.push(ds);
             }
-            console.log(_this.zoomStack);
-            console.log(tmp);
+            // console.log(_this.zoomStack);
+            // console.log(tmp);
             _this.drawPie(tmp);
         });
 };

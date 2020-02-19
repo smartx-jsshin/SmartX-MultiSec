@@ -26,6 +26,8 @@ html
     link(href='/public/stylesheets/vis.css', rel='stylesheet', type='text/css')
     link(href='/public/stylesheets/opentip.css', type='text/css', rel='stylesheet')
     script(type='text/javascript', src='/public/libs/opentip-jquery.js')
+    script(type='text/javascript').
+      var boxList = "#{boxList}"
     script(type='text/javascript', src="/public/javascripts/topology/tcpTopologyViewOpsGraph.js")
 
   body(onload='draw()')

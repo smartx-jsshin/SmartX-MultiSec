@@ -11,44 +11,44 @@ if (session_username === null) {
 //Resource-level Functions Start
 //receive Box objects
 function receiveValueBox(boxs) {
-    var iframe = document.getElementById('grafanaIframe');
-    console.log(boxs);
-    iframe.src = 'http://' + vCenterHost + ':3000/dashboard/db/resource-dashboard-' + boxs.label;
+    var iframe = document.getElementById('secondIFrame');
+    // console.log(boxs);
+    // iframe.src = 'http://' + vCenterHost + ':3000/dashboard/db/resource-dashboard-' + boxs.label;
 }
 
 //receive tenant objects
 function receiveTenantID(data) {
     //- console.log("Receive Data Success " + data.info);
-    var iframe = document.getElementById('grafanaIframe');
-    iframe.src = 'http://' + vCenterHost + ':3000/dashboard/db/resource-dashboard-' + data.boxID;
+    var iframe = document.getElementById('secondIFrame');
+    // iframe.src = 'http://' + vCenterHost + ':3000/dashboard/db/resource-dashboard-' + data.boxID;
 }
 
 //receive tenant objects
 function receiveSampledFlows(data) {
     //- console.log("Receive Data Success " + data.info);
-    var iframe = document.getElementById('grafanaIframe');
-    iframe.src = 'http://' + vCenterHost + ':8008/app/dashboard-example/html/';
+    var iframe = document.getElementById('secondIFrame');
+    // iframe.src = 'http://' + vCenterHost + ':8008/app/dashboard-example/html/';
 }
 
 //receive tenant objects
 function receiveTracedPkts(data) {
     //- console.log("Receive Data Success " + data.info);
-    var iframe = document.getElementById('grafanaIframe');
-    iframe.src = 'http://' + vCenterHost + ':8008/agents/html';
+    var iframe = document.getElementById('secondIFrame');
+    // iframe.src = 'http://' + vCenterHost + ':8008/agents/html';
 }
 
 //receive brCap Objects
 function receiveValueBrCap(brCaps) {
-    var iframe = document.getElementById('grafanaIframe');
-    console.log(brCaps);
+    var iframe = document.getElementById('secondIFrame');
+    // console.log(brCaps);
     ////iframe.src = 'http://'+serverIP+':3000/dashboard/db/flow-dashboard-'+brCaps.label+'-'+brCaps.box;
     //iframe.src = 'http://'+serverIP+':'+serverPort+'/opsflowrules/'+brCaps.box;
 }
 
 //receive VM Objects
 function receiveValueVM(vms) {
-    var iframe = document.getElementById('grafanaIframe');
-    console.log(vms);
+    var iframe = document.getElementById('secondIFrame');
+    // console.log(vms);
     //iframe.src = 'http://'+serverIP+':3000/dashboard/db/flow-dashboard-instance-'+vms.label+'-'+vms.box;
 }
 
@@ -56,13 +56,13 @@ function receiveValueVM(vms) {
 //Flow-level Functions Start
 //Route to Network Flow View
 function getNetworkFlow(network) {
-    var iframe = document.getElementById('grafanaIframe');
-    iframe.src = 'http://' + vCenterHost + ':8008/app/dashboard-example/html/';
+    var iframe = document.getElementById('secondIFrame');
+    // iframe.src = 'http://' + vCenterHost + ':8008/app/dashboard-example/html/';
 }
 
 //Route to Box Flow View
 function getBoxFlow(boxs) {
-    var iframe = document.getElementById('grafanaIframe');
+    var iframe = document.getElementById('secondIFrame');
     //console.log(boxs);
     if (boxs.id === 1)
         iframe.src = "http://" + vCenterHost + ":5601/app/kibana#/dashboard/dab0b840-c90a-11e7-9140-dfb68f1deddf?_g=(refreshInterval%3A('%24%24hashKey'%3A'object%3A344'%2Cdisplay%3A'5%20seconds'%2Cpause%3A!f%2Csection%3A1%2Cvalue%3A5000)%2Ctime%3A(from%3Anow-30m%2Cmode%3Aquick%2Cto%3Anow))";
@@ -79,37 +79,37 @@ function getBoxFlow(boxs) {
 
 //Route to Flow Rules + Stats View
 function getBrCapFlow(brCaps) {
-    var iframe = document.getElementById('grafanaIframe');
-    console.log(brCaps);
-    iframe.src = 'http://' + vCenterHost + ':' + vCenterPort + '/opsflowrules/' + brCaps.box;
+    var iframe = document.getElementById('secondIFrame');
+    // console.log(brCaps);
+    // iframe.src = 'http://' + vCenterHost + ':' + vCenterPort + '/opsflowrules/' + brCaps.box;
 }
 
 //Route to VM Flow View
 function getVMFlow(vms) {
-    var iframe = document.getElementById('grafanaIframe');
-    console.log(vms);
+    var iframe = document.getElementById('secondIFrame');
+    // console.log(vms);
     //iframe.src = 'http://'+serverIP+':'+serverPort+'/opsflowrules/'+brCaps.box;
 }
 
 //Route to Flow Path Trace View
 function getFlowPathTrace(vlan) {
-    var iframe = document.getElementById('topoIframe');
-    console.log('In Menu ' + vlan);
-    iframe.src = 'http://' + vCenterHost + ':' + vCenterPort + '/flowtracingviewops/' + vlan;
+    var iframe = document.getElementById('firstIFrame');
+    // console.log('In Menu ' + vlan);
+    // iframe.src = 'http://' + vCenterHost + ':' + vCenterPort + '/flowtracingviewops/' + vlan;
 }
 
 //Route to Onion-ring Multi-View for tenant
 function getOnionRingTenant(vlan) {
-    var iframe = document.getElementById('topoIframe');
-    iframe.src = 'http://' + vCenterHost + ':' + vCenterPort + '/onionringviewtenant/' + vlan;
+    var iframe = document.getElementById('firstIFrame');
+    // iframe.src = 'http://' + vCenterHost + ':' + vCenterPort + '/onionringviewtenant/' + vlan;
 }
 
 //Flow-level Functions End
 //Show Panel on Click
 function showPanel(itemID) {
-    var iframe = document.getElementById('topoIframe');
-    console.log(itemID);
-    iframe.src = 'http://' + vCenterHost + ':' + vCenterPort + '/' + itemID.label + '-' + itemID.box;
+    var iframe = document.getElementById('firstIFrame');
+    // console.log(itemID);
+    // iframe.src = 'http://' + vCenterHost + ':' + vCenterPort + '/' + itemID.label + '-' + itemID.box;
 }
 
 // Called when the Visualization API is loaded.

@@ -1,13 +1,12 @@
-
 function decodeHtmltoJson(text){
-    console.log("Before Decoding: " + onionRingData);
+    // console.log("Before Decoding: " + onionRingData);
 
     var textArea = document.createElement('textarea');
     textArea.innerHTML = text;
     jsonFromText = JSON.parse(textArea.value)
 
-    console.log("After Decoding: ");
-    console.log(jsonFromText);
+    // console.log("After Decoding: ");
+    // console.log(jsonFromText);
 
     return jsonFromText;
 }
@@ -28,7 +27,7 @@ var config = {
         return d.data.colorBoder;
     },
     value: "resource",
-    inner: "drilldown",
+    inner: "childElements",
     tooltip: function (d) {
         return "<div style='background-color: #4a4; color: white; padding: 15px; text-align: middle; border: dotted 1px black;'><strong>" + d.info;
     },
@@ -37,11 +36,10 @@ var config = {
     },
     transition: "linear",
     transitionDuration: 20,
-    donutRadius: 0,
+    donutRadius: 5,
     gradient: true,
     colors: d3.scale.category20(),
     labelColor: "black",
-    stroke: "#eee",
     strokeWidth: 2,
     drilldownTransition: "linear",
     drilldownTransitionDuration: 0,

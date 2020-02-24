@@ -30,11 +30,14 @@ class PostVBoxStatusMeasure:
 
     def measure(self):
         active_vms =  self.get_active_vm_list()
-        # print(active_vms)
+        #self._logger.info(active_vms)
+
         vm_with_user = self.map_user_to_vms(active_vms)
-        # print (vm_with_user)
+        #self._logger.info(vm_with_user)
+
         vmlist_json = self.vm_list_to_json(vm_with_user)
-        print(vmlist_json)
+        #self._logger.info(vmlist_json)
+
         # self.send_msg(vmlist_json)
 
     def get_active_vm_list(self):
@@ -53,13 +56,16 @@ class PostVBoxStatusMeasure:
         os_cmd = ["openstack", "user", "list", "-f", "json"]
         ul = self.os_command(os_cmd)
         ud = self.user_list_to_dicts(ul)
+        #self._logger.info(ud)
 
         for vm in _vm_list:
             os_cmd = ["openstack", "server", "show", vm["ID"], "-f", "json"]
             vm_detail = self.os_command(os_cmd)
+            #self._logger.info(vm_detail)
             vm_user_id = vm_detail["user_id"]
             vm["User"] = ud[vm_user_id]
 
+        #self._logger.info(_vm_list)
         return _vm_list
 
     def user_list_to_dicts(self, ul):
@@ -74,11 +80,11 @@ class PostVBoxStatusMeasure:
             _active_vm = dict()
             _active_vm["name"] = vm.get("Name")
             _active_vm["status"] = vm.get("Status")
-            _active_vm["tenant"] = vm.get("User").split("-")[0].upper()
+            #_active_vm["tenant"] = vm.get("User").split("-")[0].upper()
+            _active_vm["tenant"] = vm.get("User")
             _docs.append(_active_vm)
         
-        json_str = json.dumps(_docs)
-        print(json_str)
+        self._logger.info(json_str)
         
         return json_str
 
@@ -98,7 +104,7 @@ class PostVBoxStatusMeasure:
         sys.exit(0)
 
 
-if "__name__" == "__main__":
+if __name__ == "__main__":
     logging.basicConfig(format="[%(asctime)s / %(levelname)s] %(filename)s,%(funcName)s(#%(lineno)d): %(message)s",
                     level=logging.INFO)
 

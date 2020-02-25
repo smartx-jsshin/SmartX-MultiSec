@@ -36,11 +36,12 @@ class KafkaMongoDBConsumer():
 
     def consume(self):
         # while not self.stop_flag:
-        for message in self.consumer:
-            print ("%s:%d:%d: key=%s value=%s" % (message.topic, message.partition,
-                message.offset, message.key,
-                message.value)
-                )
+        while not self.stop_flag:
+            for message in self.consumer:
+                print ("%s:%d:%d: key=%s value=%s" % (message.topic, message.partition,
+                    message.offset, message.key,
+                    message.value)
+                    )
         self.consumer.close()
 
     def insert_docs_to_db(self, _docs):
@@ -64,7 +65,7 @@ class KafkaMongoDBConsumer():
     
     def signal_handler(self, signal, frame):
         self.logger.info("Visibility Point {} was finished successfully".format(self.__class__.__name__))
-        # self.stop_flag = True
+        self.stop_flag = True
         self.consumer.close()
         sys.exit(0)
 

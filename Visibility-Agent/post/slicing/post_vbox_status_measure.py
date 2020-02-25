@@ -15,8 +15,7 @@ class PostVBoxStatusMeasure:
         self._config = self.load_config(config_file)
 
         self._topic = self._config["kafka"]["kafka_topic"]
-        _kakfa_url = "{}:{}".format(self._config["kafka"]["kafka_broker_ip"], self._config["kafka"]["kafka_broker_port"])
-        self._producer = KafkaProducer(bootstrap_servers=_kakfa_url)
+        self._kakfa_url = "{}:{}".format(self._config["kafka"]["kafka_broker_ip"], self._config["kafka"]["kafka_broker_port"])
 
         self._shell_envvar = os.environ
         for key in self._config["openstack"].keys():
@@ -38,7 +37,7 @@ class PostVBoxStatusMeasure:
         vmlist_json = self.vm_list_to_json(vm_with_user)
         #self._logger.info(vmlist_json)
 
-        # self.send_msg(vmlist_json)
+        self.send_msg(vmlist_json)
 
     def get_active_vm_list(self):
         os_cmd = ["openstack", "server", "list", "--all-projects", "-f", "json"]
@@ -84,9 +83,9 @@ class PostVBoxStatusMeasure:
             _active_vm["tenant"] = vm.get("User")
             _docs.append(_active_vm)
         
-        self._logger.info(json_str)
+        vm_json_str = json.dumps(_docs).encode('utf-8')
         
-        return json_str
+        return vm_json_str
 
     def os_command(self, _cmd):
         p = subprocess.Popen(_cmd, stdout=subprocess.PIPE, env=self._shell_envvar)
@@ -96,7 +95,12 @@ class PostVBoxStatusMeasure:
         return outs_json
 
     def send_msg(self, msg):
-        self._producer.send(self._topic, msg)
+        self._producer = KafkaProducer(bootstrap_servers=self._kakfa_url)
+        #self._logger.info(self._topic)
+        #self._logger.info(msg)
+        
+	self._producer.send(self._topic, msg)
+        self._producer.close()
 
     def signal_handler(self, signal, frame):
         self._logger.info("Visibility Point {} was finished successfully".format(self.__class__.__name__))

@@ -20,9 +20,7 @@ class KafkaMongoDBConsumer():
         kafka_url = self.config["kafka"]["broker_ip"] + ":" + self.config["kafka"]["broker_port"]
         self.consumer = KafkaConsumer(bootstrap_servers= kafka_url, 
             auto_offset_reset='earliest',
-            group_id='mongodb-group',
-            consumer_timeout_ms=1000
-            )
+            group_id='mongodb-group' )
         self.consumer.subscribe(self.config["kafka"]["topic_list"])
 
         signal.signal(signal.SIGINT, self.signal_handler)

@@ -1,0 +1,133 @@
+---
+  ## Initialization Steps
+  ## Ensure Docker is working
+  ## Ensure Kubernetes in V-Center is working
+  ## Deploy MongoDB Docker container
+  ## Deploy InfluxDB Docker container
+  ## Deploy KeyDB Docker container
+  ## Deploy Kafka pods to Kubernetes
+  ## Deploy Grafana Docker container
+
+  - hosts: v-center
+    vars_files:
+      - db_vars.yaml
+
+    vars:
+      mongodb_data_dir: "{{ db_data_rootdir }}"/"{{ mongodb_container_name }}"
+      influxdb_data_dir: "{{ db_data_rootdir }}"/"{{ influxdb_container_name }}"
+      keydb_data_dir: "{{ db_data_rootdir }}"/ "{{ keydb_container_name }}"
+      influxdb_config_dir: "{{ db_config_rootdir}}"/"{{ influxdb_container_name }}"
+      keydb_config_dir: "{{ db_config_rootdir}}"/"{{ keydb_container_name }}"
+
+    tasks:
+      ## MongoDB Installation
+      - name: Create MongoDB Data Directory
+        file:
+          path: "{{ mongodb_data_dir }}"
+          owner: "{{ ansible_user }}"
+          group: "{{ ansible_user }}"
+          mode: '0644'
+          state: directory
+
+      - name: Pull MongoDB Docker Image
+        docker_image:
+          name: mongo:4.2.3-bionic
+          source: pull
+          
+      - name: Create MongoDB Docker Instance
+        docker_container:
+          name: "{{ mongodb_container_name }}"
+          image: mongo:4.2.3-bionic
+          restart_policy: unless-stopped
+          published_ports:
+            - "{{ mongodb_published_port }}":27017
+          env:
+            MONGO_INITDB_ROOT_USERNAME: "{{ mongodb_admin_id }}"
+            MONGO_INITDB_ROOT_PASSWORD: "{{ mongodb_admin_pw }}"
+          volume:
+            - "{{ mongodb_data_dir }}":/data/db
+
+      ## InfluxDB Installation
+      - name: Create InfluxDB Data Directory
+        file:
+          path: "{{ influxdb_data_dir }}"
+          owner: "{{ ansible_user }}"
+          group: "{{ ansible_user }}"
+          mode: '0644'
+          state: directory
+
+      - name: Create InfluxDB Config Directory
+        file:
+          path: "{{ influxdb_config_dir }}"
+          owner: "{{ ansible_user }}"
+          group: "{{ ansible_user }}"
+          mode: '0644'
+          state: directory
+      
+      - name: Templating InfluxDB Config File
+        template:
+          source: templates/influxdb.conf.j2
+          dest: "{{ influxdb_config_dir }}"/influxdb.conf
+          owner: "{{ ansible_user }}"
+          group: "{{ ansible_user }}"
+          mode: '0644'
+
+      - name: Pull InfluxDB Docker Image
+        docker_image:
+          name: influxdb:1.7.9
+          source: pull
+      
+      - name: Create InfluxDB Docker Instance
+        docker_container:
+          name: "{{ influxdb_container_name }}"
+          image: influxdb:1.7.9
+          restart_policy: unless-stopped
+          published_ports:
+            - "{{ influxdb_published_port }}":8086
+          env:
+            INFLUXDB_ADMIN_USER: "{{ influxdb_admin_id }}"
+            INFLUXDB_ADMIN_PASSWORD: "{{ influxdb_admin_pw }}"
+          volume:
+            - "{{ influxdb_data_dir }}":/var/lib/influxdb
+            - "{{ influxdb_config_dir }}"/influxdb.conf:/etc/influxdb/influxdb.conf:ro
+
+      ## KeyDB Installation
+      - name: Create KeyDB Data Directory
+        file:
+          path: "{{ db_data_root_dir }}"/"{{ keydb_container_name }}"
+          owner: "{{ ansible_user }}"
+          group: "{{ ansible_user }}"
+          mode: '0644'
+          state: directory
+
+      - name: Create KeyDB Config Directory
+        file:
+          path: "{{ db_config_rootdir }}"/"{{ keydb_container_name }}"
+          owner: "{{ ansible_user }}"
+          group: "{{ ansible_user }}"
+          mode: '0644'
+          state: directory
+      
+      - name: Templating KeyDB Config File
+        template:
+          src: templates/keydb.conf.j2
+          dest: "{{ keydb_config_dir }}"/keydb.conf
+          owner: "{{ ansible_user }}"
+          group: "{{ ansible_user }}"
+          mode: '0644'
+
+      - name: Pull KeyDB Docker Image
+        docker_image:
+          name: eqalpha/keydb
+          source: pull
+      
+      - name: Create KeyDB Docker Instance
+        docker_container:
+          name: "{{ keydb_container_name }}"
+          image: eqalpha/keydb
+          restart_policy: unless-stopped
+          published_ports:
+            - "{{ control_plane_ip }}":"{{ keydb_published_port }}":6379
+          volume:
+            - "{{ keydb_data_dir }}":/data
+            - "{{ keydb_config_dir }}"/keydb.conf:/etc/keydb/keydb.conf

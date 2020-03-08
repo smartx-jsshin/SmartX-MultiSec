@@ -6,7 +6,7 @@ import sys
 
 from kafka import KafkaProducer
 
-class PostVBoxStatusMeasure:
+class SlicingVBoxStatusMeasure:
     def __init__(self, config_file):
         self._name = "slicing-post-vbox-status"
 
@@ -17,9 +17,14 @@ class PostVBoxStatusMeasure:
         self._topic = self._config["kafka"]["kafka_topic"]
         self._kakfa_url = "{}:{}".format(self._config["kafka"]["kafka_broker_ip"], self._config["kafka"]["kafka_broker_port"])
 
-        self._shell_envvar = os.environ
-        for key in self._config["openstack"].keys():
-            self._shell_envvar[key] = self._config["openstack"][key]
+        self._measure_interface = None
+        
+        if self._config["slicing_type"].lower() == "openstack":
+            self._measure_interface = OpenStackInterface(self._config["openstack"])
+        elif self._config["slicing_type"].lower() == "libvirt":
+            raise NotImplementedError("A measure interface for Libvirt was not implemented. This measure will be terminated")
+        else:
+            raise ValueError("Slicing type {} is not supported".format(self._config["slicing_type"]))
 
     def load_config(self, config_file = "config.json"):
         with open(config_file) as f:
@@ -28,6 +33,28 @@ class PostVBoxStatusMeasure:
         return read_json
 
     def measure(self):
+        msg = self._measure_interface.get_measure_data()
+        self.send_msg(msg)
+
+    def send_msg(self, msg_str):
+        self._producer = KafkaProducer(bootstrap_servers=self._kakfa_url)
+        #self._logger.info(self._topic)
+        #self._logger.info(msg)
+        self._producer.send(self._topic, msg_str.encode('utf-8'))
+        self._producer.close()
+
+    def signal_handler(self, signal, frame):
+        self._logger.info("Visibility Point {} was finished successfully".format(self.__class__.__name__))
+        self._producer.close()
+        sys.exit(0)
+
+class OpenStackInterface:
+    def __init__(self, _openstack_config):
+        self._shell_envvar = os.environ
+        for key in _openstack_config["openstack"].keys():
+            self._shell_envvar[key] = _openstack_config["openstack"][key]
+
+    def get_measure_data(self):
         active_vms =  self.get_active_vm_list()
         #self._logger.info(active_vms)
 
@@ -37,7 +64,7 @@ class PostVBoxStatusMeasure:
         vmlist_json = self.vm_list_to_json(vm_with_user)
         #self._logger.info(vmlist_json)
 
-        self.send_msg(vmlist_json)
+        return vmlist_json
 
     def get_active_vm_list(self):
         os_cmd = ["openstack", "server", "list", "--all-projects", "-f", "json"]
@@ -83,7 +110,7 @@ class PostVBoxStatusMeasure:
             _active_vm["tenant"] = vm.get("User")
             _docs.append(_active_vm)
         
-        vm_json_str = json.dumps(_docs).encode('utf-8')
+        vm_json_str = json.dumps(_docs)
         
         return vm_json_str
 
@@ -93,19 +120,6 @@ class PostVBoxStatusMeasure:
 
         outs_json = json.loads(outs.decode('utf-8'))
         return outs_json
-
-    def send_msg(self, msg):
-        self._producer = KafkaProducer(bootstrap_servers=self._kakfa_url)
-        #self._logger.info(self._topic)
-        #self._logger.info(msg)
-        
-	self._producer.send(self._topic, msg)
-        self._producer.close()
-
-    def signal_handler(self, signal, frame):
-        self._logger.info("Visibility Point {} was finished successfully".format(self.__class__.__name__))
-        self._producer.close()
-        sys.exit(0)
 
 
 if __name__ == "__main__":
@@ -120,6 +134,6 @@ if __name__ == "__main__":
     else:
         exit(1)
 
-    measure = PostVBoxStatusMeasure(config_file)
+    measure = SlicingVBoxStatusMeasure(config_file)
     measure.measure()
 

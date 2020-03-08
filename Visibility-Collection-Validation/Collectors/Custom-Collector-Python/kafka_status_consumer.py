@@ -9,19 +9,19 @@ from pymongo import MongoClient
 from kafka import KafkaConsumer, KafkaProducer
 
 
-class KafkaMongoDBConsumer():
+class KafkaStatusConsumer():
     def __init__(self):
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
-        self.stop_flag = False
+        # self.stop_flag = False
         self.config = self.load_config()
 
         kafka_url = self.config["kafka"]["broker_ip"] + ":" + self.config["kafka"]["broker_port"]
         self.consumer = KafkaConsumer(bootstrap_servers= kafka_url, 
             auto_offset_reset='earliest',
             group_id='mongodb-group' )
-        self.consumer.subscribe(self.config["kafka"]["topic_list"])
+        self.consumer.subscribe(self.config["kafka"]["status_topic_list"])
 
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
@@ -34,16 +34,15 @@ class KafkaMongoDBConsumer():
 
     def consume(self):
         # while not self.stop_flag:
-        while not self.stop_flag:
-            for message in self.consumer:
-                print ("%s:%d:%d: key=%s value=%s" % (message.topic, message.partition,
-                    message.offset, message.key,
-                    message.value)
-                    )
+        for message in self.consumer:
+            print ("%s:%d:%d: key=%s value=%s" % (message.topic, message.partition,
+                message.offset, message.key,
+                message.value))
+            # self.insert_db(message.topic, message.value)
         self.consumer.close()
 
-    def insert_docs_to_db(self, _docs):
-        mongo_cfg = self.config["mongo"]
+    def insert_db(self, topic, _docs):
+        mongo_cfg = self.config["mongodb"]
 
         if mongo_cfg.get("id") is not None and mongo_cfg.get("password") is not None:
             mongo_client = MongoClient(mongo_cfg["host"] + ":" + mongo_cfg["port"],
@@ -56,9 +55,10 @@ class KafkaMongoDBConsumer():
 
         db = mongo_client[mongo_cfg["database"]]
 
-        db_col = mongo_cfg["collection_map"]["collector_name"]
-        db.drop_collection(db_col)
-        coll = db[db_col]
+        coll_name = mongo_cfg["collection_map"][topic]
+        
+        # db.drop_collection(coll_name)
+        coll = db[coll_name]
         coll.insert_many(_docs)
     
     def signal_handler(self, signal, frame):
@@ -82,5 +82,5 @@ if __name__ == "__main__":
     else:
         exit(1)
 
-    mongoDbConsumer = KafkaMongoDBConsumer()
-    mongoDbConsumer.consume()
+    consumer = KafkaStatusConsumer()
+    consumer.consume()

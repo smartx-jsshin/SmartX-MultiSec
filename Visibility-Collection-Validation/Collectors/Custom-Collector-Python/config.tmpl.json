@@ -1,31 +1,32 @@
 {
-  "mongo": {
+  "collector": {},
+  "kafka":{
+    "broker_ip": "kafka_host_ip",
+    "broker_port": "kafka_broker_port",
+    "status_topic_list": [
+      "resource-status-pbox",
+      "slicing-status-vbox"
+    ],
+    "measurement_topic_list": [
+      "resource-performance-pbox",
+      "slicing-performance-vbox"
+    ]
+  },
+  "mongodb": {
     "host": "127.0.0.1",
     "port": "27017",
     "id": "admin",
     "password": "admin",
     "database": "admin",
     "collection_map": {
-      "underlay": "underlay",
-      "resource-tower-pbox-status": "resource-tower-pbox-status",
-      "resource-post-pbox-status": "resource-post-pbox-status",
-      "resource-box-pbox-status": "resource-cube-pbox-status",
-      "slicing-tower-vbox-status": "slicing-tower-vbox-status",
-      "slicing-post-vbox-status": "slicing-post-vbox-status",
-      "slicing-post-vlan-status": "slicing-post-vlan-status"
+      "resource-status-pbox": "resource-status-pbox",
+      "slicing-status-vbox": "slicing-status-vbox"
     }
   },
-  "maas": {
+  "influxdb": {
     "host": "127.0.0.1",
-    "port": "5240",
+    "port": "8086",
     "id": "admin",
     "password": "admin"
-  },
-  "kafka":{
-    "broker_ip": "kafka_host_ip",
-    "broker_port": "kafka_broker_port",
-    "topic_list": [
-      "slicing-post-vbox-status"
-    ]
   }
 }

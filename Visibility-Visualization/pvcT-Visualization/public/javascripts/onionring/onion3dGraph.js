@@ -1,13 +1,36 @@
+function decodeHtmltoJson(text){
+    // console.log("Before Decoding: " + onionRingData);
+
+    var textArea = document.createElement('textarea');
+    textArea.innerHTML = text;
+    var jsonFromText = JSON.parse(textArea.value);
+
+    // console.log("After Decoding: ");
+    // console.log(jsonFromText);
+
+    return jsonFromText;
+}
+
 function draw() {
     // Configuration Variables for Onion-ring
-    const ringSize = 10;
-    const segmentLayer = 4;
-    const pieceHeightScale = 5;
+    console.log("Start onion3dGraph.Draw()");
+
+    const ringSize = 5;
+    const pieceHeightScale = 3;
+    const defaultHeight = 0.2 * pieceHeightScale;
     const resourceColorPallete = [ 0xC0C0C0, 0xC0C0C0, 0x008000, 0x008000, 0x008000, 0xFFFF00, 0xFFFF00, 0x0000FF ] // Silver, Silver, Green, Green, Green, Yellow, Yellow, Blue
-    const securityColorPallete = [ 0x808080, 0x008000, 0xFFFF00, 0xFFA500, 0xFF0000, 0x800000, 0x000000 ] // Gray, Green, Yellow, Orange, Red, Maroon, Black
-    const securityMode = false;
+    const securityColorPallete = [ 0x808080, 0x00FF000, 0x66FF000, 0x99FF000, 0xCCFF000, 0xFFFF00, 0xFFCC00, 0xFF9900, 0xFF6600, 0xFF3300, 0xFF0000 ] // Gray, Green, Yellow, Red
+    
+    const onionRing3DDataJson = decodeHtmltoJson(onionRing3DData);
+    console.log(onionRing3DDataJson);
+
+    const tierDef = onionRing3DDataJson.tier_definition;
+    const pgTopo = onionRing3DDataJson.playground_topology;
+    console.log(tierDef);
+    console.log(pgTopo);
+
     const radiusMargin = 0.2;
-    const angleMargin = 0.1;
+    const angleMargin = 0.15;
 
 
     //Document Management
@@ -72,11 +95,14 @@ function draw() {
             bevelSize: 0.1,
             bevelSegments: 0.1
         } );
+        txtGeometry.computeBoundingBox();
+        var xOffset = (txtGeometry.boundingBox.max.x - txtGeometry.boundingBox.min.x) * -0.5;
+        var yOffset = (txtGeometry.boundingBox.max.y - txtGeometry.boundingBox.min.y) * -0.5;
 
         var txtMaterial = new THREE.MeshPhongMaterial({color:0x000000});
         var txtMesh = new THREE.Mesh(txtGeometry, txtMaterial);
-        txtMesh.position.x = posX;
-        txtMesh.position.y = posY;
+        txtMesh.position.x = posX + xOffset;
+        txtMesh.position.y = posY + yOffset;
         txtMesh.position.z = posZ;
 
         return txtMesh;
@@ -100,6 +126,7 @@ function draw() {
         const txtPosX = 0
         const txtPosY = 0
         const txtPosZ = height + 1;
+        const txtRotation = 0;
         const txtMesh = createTextMesh(pieceName, txtPosX, txtPosY, txtPosZ);
         centerCircleMesh.add(txtMesh);
 
@@ -141,80 +168,100 @@ function draw() {
         return ringPieceMesh;
     }
 
-    function countRingSegments(jsonVar){
-        //console.log(jsonVar);
-
-        if (jsonVar.sublayer == null && jsonVar.layer < segmentLayer){
-            return 1;
-        }
-        else if (jsonVar.layer == segmentLayer){
-            return 1;
-        }
-
-        var temp = 0;
-        jsonVar.sublayer.forEach(element => {
-            temp += countRingSegments(element);
-            jsonVar.segments = temp;
-        });
-        return temp;
-    }
-
-    function drawRingSegments(jsonVar, startDegree, endDegree){
+    function drawRingSegments(listVar, startDegree, endDegree){
         // Implementing Main Logic
         // Layer, Start Radian, End Radian
-        const secLevel = jsonVar.security;
-        const layerNum = jsonVar.layer;
+        var curElemCount = listVar.length;
+        var degreePerElem = (endDegree - startDegree) / curElemCount;
 
-        console.log("[drawRingSegments]" + " name: "+ jsonVar.name + " startDegree: " + startDegree + " endDegree: " + endDegree + " secLevel: " + secLevel + " layerNum: " + layerNum + " segments: " + jsonVar.segments);
+        var curStartDegree = startDegree;
+        var curEndDegree = startDegree + degreePerElem;
 
-        var pieceColor, height;
-        if (securityMode == true){
-            pieceColor = securityColorPallete[secLevel-1];
-            height = secLevel * pieceHeightScale;
-        } else { //Resource Mode
-            pieceColor = resourceColorPallete[layerNum-1];
-            height = 1  * pieceHeightScale;
-        }
+        console.log("curElemCount: " + curElemCount + " degreePerElem: " + degreePerElem);
 
-        // Create a visualization piece
-        if (layerNum == 1){
-            const center = createCenterCircle(layerNum, pieceColor, height, jsonVar.name);
-            group.add(center);
-        } else {
-            const piece = createRingPiece(layerNum, pieceColor, height, startDegree, endDegree, jsonVar.name);
-            group.add(piece);
-        }
-        
-        if (jsonVar.sublayer == null){
-            return;
-        } else {
-            var nextStartDegree = startDegree;
-            const subSegmentDegree = (endDegree - startDegree) / jsonVar.segments;
-            var nextEndDegree;
-            jsonVar.sublayer.forEach(element => {
-                if (!element.hasOwnProperty('segments')){
-                    if (element.layer > segmentLayer){
-                        element.segments = jsonVar.segments / jsonVar.sublayer.length;
-                    } else{
-                        element.segments = 1;
-                    }                    
-                }
-                nextEndDegree = nextStartDegree + subSegmentDegree * element.segments;
-                console.log("[call drawRingSegments]" + " element: " + element.name + " layer: " + element.layer + " startDegree: " + startDegree + " endDegree: " + endDegree + " nextStartDegree: " + nextStartDegree + " nextEndDegree: " + nextEndDegree  + " element.segments: " + element.segments + " subSegmentDegree: " + subSegmentDegree);
-                drawRingSegments(element, nextStartDegree, nextEndDegree);
-                nextStartDegree = nextEndDegree;
-            });
-        }
-        
+        console.log("listVar");
+        console.log(listVar);
+
+        listVar.forEach(curElem => {
+            //
+            // Calculate the height and the color of a ring piece
+            //
+            console.log("curElem");
+            console.log(curElem);
+
+            var pieceColor, height, layerNum;
+            if ("securityLevel" in curElem){
+                height = (curElem.securityLevel) / 10 * pieceHeightScale + defaultHeight;
+                var palleteIdx = Math.ceil( (curElem.securityLevel) / (100 / (securityColorPallete.length - 1)) );
+                if (palleteIdx == 0) palleteIdx = 1;
+                pieceColor = securityColorPallete[palleteIdx];
+            } else {
+                height = defaultHeight;
+                pieceColor = securityColorPallete[0];
+            }
+            console.log("height: " + height + " palleteIdx: " + palleteIdx);
+
+            //
+            // Get the tier of this element from the definition
+            //
+            if (curElem.tier in tierDef){
+                layerNum = tierDef[curElem.tier];
+            } else{
+                layerNum = 0
+            }
+
+            console.log("[drawRingSegments]" + " name: "+ curElem.name + "curStartDegree: " + curStartDegree + " curEndDegree: " + curEndDegree + " height: " + height + " layerNum: " + layerNum);
+
+            //
+            // Create a visualization piece
+            //
+            if (layerNum == 0){
+                // Do not draw this element
+            } else if (layerNum == 1){
+                const center = createCenterCircle(layerNum, pieceColor, height, curElem.name);
+                group.add(center);
+            } else {
+                const piece = createRingPiece(layerNum, pieceColor, height, curStartDegree, curEndDegree, curElem.name);
+                group.add(piece);
+            }
+
+            //
+            // For Children Elements
+            //
+            if (curElem.childElements){
+                var children = {};
+                curElem.childElements.forEach(childElement => {
+                    console.log("childElement");
+                    console.log(childElement);
+                    if (childElement.tier in children){
+                        children[childElement.tier].push(childElement);
+                    } else {
+                        children[childElement.tier] = [];
+                        children[childElement.tier].push(childElement);
+                    }
+                });
+                
+                console.log(children);
+                Object.keys(children).forEach(nextTierName => {
+                    drawRingSegments(children[nextTierName], curStartDegree, curEndDegree);
+                })
+            }
+            
+            //
+            // Increase start and end degrees for the next element
+            //
+            curStartDegree = curStartDegree + degreePerElem;
+            curEndDegree = curEndDegree + degreePerElem;
+        });
     }
 
     const group = new THREE.Group();
     scene.add( group );
 
-    countRingSegments(topologyVar);
-    console.log(topologyVar);
-
-    drawRingSegments(topologyVar, 0, 360);
+    console.log(pgTopo);
+    pgTopo.forEach(element =>{
+        drawRingSegments(element, 0, 360);
+    });
 
     // Rendering Configuration
     const renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -247,3 +294,5 @@ function draw() {
 
     animate();
 }
+
+draw()

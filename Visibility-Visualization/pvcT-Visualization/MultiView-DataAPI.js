@@ -1,6 +1,7 @@
 var MongoClient = require('mongodb').MongoClient;
 var dateFormat = require('dateformat');
 const assert = require('assert');
+const { resolve } = require('path');
 
 class ResourceProvider {
 	constructor() {
@@ -273,47 +274,217 @@ class ResourceProvider {
 		});
 	}
 
-	_setColorToTopology(topology, layerStatus, colorPallete){
-		return;
+	_getBoxStatusData(boxList, box_name){
+		for (i = 0; i < boxList.length; i++){
+			if (boxList[i].name === box_name){
+				return boxList[i];
+			}
+		}
+		return null;
 	}
-	
-	getOnionRingData(callback){
-		console.log("[ResourceProvider] getOnionRingData() is called");
+
+	_setSegmentAttr(segment, boxStatusData, tenant){
+		segment["size"] = 1;
+		
 
 		const statusPallete = {
 			"notProvisioned": "#EFEFEF", // 
-			"working": "90FF90",
+			"good": "90FF90",
 			"warning": "#FFA500",
 			"failed": "#FF0000"
-		}; // 
-		const tenantPallete = ["#D3D3D3", "#000000", "#0000FF", "#FF0000", "#800080"]; // LightGray (NotAssigned), Black (Operator), blue, red, purple
-		const colorPallete = {
-			statusPallete: statusPallete,
-			tenantPallete: tenantPallete
 		};
 
-		// var mongoClient = new MongoClient(this.mongoUrl, { useUnifiedTopology: true });
+		if (boxStatusData === null){
+			segment["statusColor"] = statusPallete.notProvisioned;
+		} else if (boxStatusData.status === "good"){
+			segment["statusColor"] = statusPallete.working;
+		} else if (boxStatusData.status === "warning"){
+			segment["statusColor"] = statusPallete.warning;
+		} else if (boxStatusData.status === "failed"){
+			segment["statusColor"] = statusPallete.failed;
+		}
 
-		// var self = this;
-		// mongoClient.connect(function (err, _mongoClient) {
-		// 	assert.equal(null, err);
 
-		// 	var multiviewDb = _mongoClient.db(self.mongoConfig.multiviewDb);
-		// 	var collection = multiviewDb.collection(self.mongoConfig.collectionMap.tcpTopology);
-		// 	assert.notEqual(null, collection);
+		const tenantPallete = [
+			"#D3D3D3", // LightGrey (Not Assigned)
+			"#000000", // Black (Operator)
+			"#0000FF", // Blue
+			"#FF0000", // Red
+			"#800080"  // Purple
+		];
 
-		// 	collection.find({}, { 
-		// 		srcBoxname: true, destBoxname: true, 
-		// 		srcBoxID: true, destBoxID: true, 
-		// 		value: true, score: true, _id: false 
-		// 	}).sort({ srcBoxID: -1 }).toArray(function (err, boxes) {
-		// 		console.log("[ResourceProvider | getTCPTopologyList()] Acquired Data: ");
-		// 		console.log(boxes);
-		// 		assert.equal(null, err);
-		// 		callback(null, boxes);
-		// 		_mongoClient.close();
-		// 	});
-		// });
+		if (boxStatusData === null){
+			tenantId = 0;	
+		} else{
+			tenantId = tenant[boxStatusData.tenant].id;
+		}
+		segment["tenantColor"] = tenantPallete[tenantId];
+	}
+
+	_enrichTopologyData1(topology, pbox, vbox, tenants){
+		var queue = [];
+		queue.push(topology);
+
+		while (true){
+			if (queue.length === 0){
+				break;
+			}
+
+			segment = queue.shift()
+
+			boxData = null;
+			if (segment.layer == "tower"){
+				_boxData = self._getBoxStatusData(segment.name, pbox);
+
+			} else if (segment.layer = "post"){
+				_boxData = self._getBoxStatusData(segment.name, pbox);
+
+			} else if (segment.layer = "post-vbox"){
+				_boxData = self._getBoxStatusData(segment.name, vbox);
+
+			} else if (segment.layer = "cube"){
+				_boxData = self._getBoxStatusData(segment.name, pbox);
+
+			} else if (segment.layer = "cube-vbox"){
+				_boxData = self._getBoxStatusData(segment.name, vbox);
+			}
+
+			self._setSegmentAttr(segment, boxData, tenants);
+
+			if (segment.contains && segment.contains.length !== 0){
+				for (i = 0; i < segment.contains.length; i++){
+					queue.push(segmenet.contains[i]);
+				}
+			}
+			if (segment.sublayer && segment.sublayer.length !== 0){
+				for (i = 0; i < segment.sublayer.length; i++){
+					queue.push(segmenet.sublayer[i]);
+				}
+			}
+		}
+	}
+
+	async _getCollectionDocs(multiviewDb, collectionName) {
+		var collection = multiviewDb.collection(collectionName);
+		var data = await collection.find().toArray();
+		return data;
+	}
+
+	_findElement(topology, elemName){
+		console.log("in _findElement(): " + elemName);
+		console.log(topology);
+
+		var res;
+		if (Array.isArray(topology)){
+
+			topology.forEach(topoElem => {
+				if (res) {
+					console.log("found");
+					return res;
+				}
+				res = this._findElement(topoElem, elemName);
+			});
+
+		} else {
+
+			if (topology.name == elemName){
+				console.log("Hit!!")
+				console.log(topology);
+				return topology;
+
+			} else if (topology.childElements){
+
+				topology.childElements.forEach(childElem => {
+					if (res) {
+						console.log("found");
+						return res;
+					}
+
+					res = this._findElement(childElem, elemName);
+				});
+
+			} else return null;
+		}
+
+		return res;
+	}
+
+	_enrichTopologyData(topology, multisec) {
+		var pgTopo = topology.playground_topology;
+
+		multisec.forEach(box => {
+			const whereList = box.where.split(".");
+			const tierList = box.tier.split("-");
+
+			var isPhysical = true;
+			if (tierList[tierList.length - 1] == "virtual"){
+				isPhysical = false;
+				whereList.pop(whereList.length -1);
+			}
+
+			var curLoc = pgTopo;
+			whereList.forEach(whereElem => {
+				curLoc = this._findElement(curLoc, whereElem);
+				console.log("curLoc");
+				console.log(curLoc);
+			});
+
+			if (!curLoc) return;
+
+			if (isPhysical){
+				curLoc["securityLevel"] = box.securityLevel;
+
+			} else {
+				
+				if (!curLoc["childElements"]) {
+					curLoc["childElements"] = [];
+				}
+
+				var newVirtualBox = {};
+				newVirtualBox["name"] = box.name;
+				newVirtualBox["tier"] = box.tier;
+				newVirtualBox["securityLevel"] = box.securityLevel;
+				curLoc["childElements"].push(newVirtualBox);
+			}
+		});
+	}
+
+	async getOnionRing3DData(callback) {
+		var readFromFile = false;
+		var topologyData, multiSecData;
+		var mongoClient, multiviewDb;
+		var self = this;
+
+		if (readFromFile){
+			self._getTopologyDataFromFile("topology-k1.v2.json").then(
+				// Load Topology Data from File
+				function(_topologyData){
+					topologyData = _topologyData
+				}
+			).
+			then(
+				function(){
+					console.log(topologyData);
+					callback(null, JSON.stringify(topologyData));
+				}
+			);
+
+		} else {
+			mongoClient = await new MongoClient(this.mongoUrl, { useUnifiedTopology: true }).connect();
+			multiviewDb = mongoClient.db(self.mongoConfig.multiviewDb);
+	
+			var topologyData = await self._getCollectionDocs(multiviewDb, self.mongoConfig.collectionMap.playgroundTopology)
+			console.log(topologyData);
+			var multiSecData = await self._getCollectionDocs(multiviewDb, self.mongoConfig.collectionMap.multiSecBoxes);
+			console.log(multiSecData);
+			await self._enrichTopologyData(topologyData[0], multiSecData);
+			await mongoClient.close();
+			callback(null, JSON.stringify(topologyData[0]));
+		}
+	}
+
+	getOnionRingData(callback){
+		console.log("[ResourceProvider] getOnionRingData() is called");
 
 		var topologyData;
 		var layerData = [];
@@ -322,7 +493,7 @@ class ResourceProvider {
 			console.log("[ResourceProvider | getOnionRingData()] Playground Type: K1");
 
 			var self = this;
-			self._getTopologyDataFromFile("topology-k1.scenario2.json")
+			self._getTopologyDataFromFile("topology-k1.scenario3.json")
 			.then( 
 				function(_topologyData){
 					topologyData = _topologyData;
@@ -333,16 +504,7 @@ class ResourceProvider {
 				function(_layerData){
 					layerData = _layerData;
 				}
-			)
-			.then(
-				new Promise( 
-					function(resolve, reject){
-						self._setColorToTopology (topologyData, layerData, colorPallete);
-						resolve();
-					}
-				)
-			)
-			.then(
+			).then(
 				function(){
 					console.log(topologyData);
 					console.log(layerData);

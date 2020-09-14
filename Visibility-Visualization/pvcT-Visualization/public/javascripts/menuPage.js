@@ -123,7 +123,7 @@ function draw() {
     var tcptopology = document.getElementById('tcptopology');
     var onionops = document.getElementById('onionops');
     // var oniontenant = document.getElementById('oniontenant');
-    // var onion3d = document.getElementById('onion3d');
+    var onion3d = document.getElementById('onion3d');
     // var resource = document.getElementById('resourcecentricviewops');
     // var flowrules = document.getElementById('flowrulesviewops');
     // var flowtracing = document.getElementById('flowtracingviewops');
@@ -152,11 +152,10 @@ function draw() {
     //     iframe2.src = 'http://' + vCenterHost + ':' + vCenterPort + '/tenantvlanmaponionring';
     // });
 
-    // onion3d.addEventListener('click', function () {
-    //     document.getElementById('panel-heading-id').innerHTML = '<b><p style="display:inline;font-size:12;color:#e6eeff;text-align:center;">3D Onion-Ring Visualization (Tenant)</p></b>';
-    //     //iframe1.src = 'http://'+serverIP+':'+serverPort+'/onionringviewtenant';
-    //     iframe1.src = 'http://' + vCenterHost + ':' + vCenterPort + '/onionring3d';
-    // });
+    onion3d.addEventListener('click', function () {
+        document.getElementById('firstIFrameHeader').innerHTML = "3D Onion-ring Visualization for Multi-tier/-level Security";
+        iframe1.src = rootUrl + '/onionring/onionring3d';
+    });
 
     // resource.addEventListener('click', function () {
     //     document.getElementById('panel-heading-id').innerHTML = '<b><p style="display:inline;font-size:12;color:#e6eeff;text-align:center;">Resource-Centric Topological View (Playground View)</p></b>';

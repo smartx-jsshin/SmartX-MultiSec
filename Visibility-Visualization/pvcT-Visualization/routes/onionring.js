@@ -37,6 +37,26 @@ module.exports = function(provider){
 			}
 		}
 	});
+
+	router.get('/onionring3d', function(req, res){
+		var data = null;
+        console.log("[Router | onionring/onionring3d] Route to /onionring/onionring3d");
+
+		resourceProvider.getOnionRing3DData(function(error, databj){
+			data = databj;
+			showView();
+		});
+		
+		function showView()
+		{
+			if(data !== null){
+				console.log("Hello");
+				console.log(data);
+				res.render('onionring/onionring3d.pug', {onionRing3DData: data});
+			}
+		}
+	});
+
 	
 	router.get('/onionringviewtenant/*', function(req, res){
 		var data = null;

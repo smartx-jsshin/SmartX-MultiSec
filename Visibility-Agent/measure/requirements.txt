@@ -1,4 +1,0 @@
-psutil
-distro
-py-cpuinfo
-kafka-python

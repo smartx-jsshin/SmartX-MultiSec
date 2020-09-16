@@ -1,0 +1,5 @@
+psutil
+kafka-python
+distro
+py-cpuinfo
+pytz

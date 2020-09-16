@@ -1,0 +1,224 @@
+{
+    "type": "3d",
+    
+    "tier_definition": {
+        "playground": 1,
+        "playground-tower": 2,
+
+        "core-cloud": 3,
+        "core-cloud-virtual": 4,
+        
+        "site": 5,
+        "post": 6,
+        "post-virtual": 7,
+        "cube": 8,
+        "cube-virtual": 9
+    },
+    
+    "playground_topology": 
+    [
+        [
+            {
+                "name": "K-ONE",
+                "tier": "playground",
+                "childElements": [
+                    {
+                        "name": "P-center",
+                        "tier": "playground-tower"
+                    },
+                    {
+                        "name": "V-center",
+                        "tier": "playground-tower"
+                    }
+                ]
+            }
+        ],
+
+
+        [
+            {
+                "name": "netcs-cloud-1",
+                "tier": "core-cloud",
+                "childElements": []
+            },
+            {
+                "name": "netcs-cloud-2",
+                "tier": "core-cloud",
+                "childElements": []
+            },
+            {
+                "name": "netcs-cloud-3",
+                "tier": "core-cloud",
+                "childElements": []
+            },
+            {
+                "name": "netcs-cloud-4",
+                "tier": "core-cloud",
+                "childElements": []
+            },
+            {
+                "name": "netcs-cloud-5",
+                "tier": "core-cloud",
+                "childElements": []
+            },
+            {
+                "name": "netcs-cloud-6",
+                "tier": "core-cloud",
+                "childElements": []
+            }
+        ],
+
+
+        [
+            {
+                "name": "GJ",
+                "tier": "site",
+                "childElements": [
+                    {
+                        "name": "K1-GJ1-Post",
+                        "tier": "post",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-GJ1-Cube1",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-GJ1-Cube2",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-GJ1-Cube3",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-GJ1-Cube4",
+                        "tier": "cube",
+                        "childElements": []
+                    }
+                ]
+            },
+
+            {
+                "name": "KU",
+                "tier": "site",
+                "childElements": [
+                    {
+                        "name": "K1-KU1-Post",
+                        "tier":"post",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KU1-Cube1",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KU1-Cube2",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KU1-Cube3",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KU1-Cube4",
+                        "tier": "cube",
+                        "childElements": []
+                    }
+                ]
+            },
+
+            {
+                "name": "SSU",
+                "tier": "site",
+                "childElements": [
+                    {
+                        "name": "K1-SSU1-Post",
+                        "tier": "post",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-SSU1-Cube1",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-SSU1-Cube2",
+                        "tier": "cube",
+                        "childElements": []
+                    }
+                ]
+            },
+
+            {
+                "name": "PO",
+                "tier": "site",
+                "childElements": [
+                    {
+                        "name": "K1-PO1-Post",
+                        "tier": "post",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-PO1-Cube1",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-PO1-Cube2",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-PO1-Cube3",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-PO1-Cube4",
+                        "tier": "cube",
+                        "childElements": []
+                    }
+                ]
+            },
+
+            {
+                "name": "KA",
+                "tier": "site",
+                "childElements": [
+                    {
+                        "name": "K1-KA1-Post",
+                        "tier":"post",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KA1-Cube1",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KA1-Cube2",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KA1-Cube3",
+                        "tier": "cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KA1-Cube4",
+                        "tier": "cube",
+                        "childElements": []
+                    }
+                ]
+            }
+        ]
+    ]
+}

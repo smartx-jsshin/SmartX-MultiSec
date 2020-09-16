@@ -1,2 +1,3 @@
 Visibility-Collection-Validation/Validators/kafka-influx-linker/logs/*
 Visibility-Collection-Validation/Validators/kafka-influx-linker/src/Kafka-InfluxDB-Chain/logs/*
+.vscode/

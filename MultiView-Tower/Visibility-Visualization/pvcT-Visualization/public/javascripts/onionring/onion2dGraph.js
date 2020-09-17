@@ -21,18 +21,19 @@ var config = {
     height: 850,
     data: onionRingDataJson,
     label: function (d) {
-        return d.data.label;
+        return d.data.name;
     },
     textBoder: function (d) {
-        return d.data.colorBoder;
+        return d.data.tenantColor;
     },
-    value: "resource",
-    inner: "childElements",
+    value: "value",
+    inner: "sublayer",
     tooltip: function (d) {
-        return "<div style='background-color: #4a4; color: white; padding: 15px; text-align: middle; border: dotted 1px black;'><strong>" + d.info;
+        return "<div style='background-color: #4a4; color: white; padding: 15px; text-align: middle; border: dotted 1px black;'><strong>" + d.description;
     },
     textColor: function (d) {
-        return d.data.color;
+        // return d.data.color;
+        return d.data.statusColor;
     },
     transition: "linear",
     transitionDuration: 20,

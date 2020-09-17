@@ -279,7 +279,12 @@ class ResourceProvider {
 		return data;
 	}
 
-	_findElement(topology, elemName){
+
+	//
+	// For Onion-ring 3D Visualization
+	//
+
+	_findMultiSecElement(topology, elemName){
 		console.log("in _findElement(): " + elemName);
 		console.log(topology);
 
@@ -291,7 +296,7 @@ class ResourceProvider {
 					console.log("found");
 					return res;
 				}
-				res = this._findElement(topoElem, elemName);
+				res = this._findMultiSecElement(topoElem, elemName);
 			});
 
 		} else {
@@ -309,7 +314,7 @@ class ResourceProvider {
 						return res;
 					}
 
-					res = this._findElement(childElem, elemName);
+					res = this._findMultiSecElement(childElem, elemName);
 				});
 
 			} else return null;
@@ -318,7 +323,7 @@ class ResourceProvider {
 		return res;
 	}
 
-	_enrichTopologyData(topology, multisec) {
+	_enrichTopologyWithSecData(topology, multisec) {
 		var pgTopo = topology.playground_topology;
 
 		multisec.forEach(box => {
@@ -333,7 +338,7 @@ class ResourceProvider {
 
 			var curLoc = pgTopo;
 			whereList.forEach(whereElem => {
-				curLoc = this._findElement(curLoc, whereElem);
+				curLoc = this._findMultiSecElement(curLoc, whereElem);
 				console.log("curLoc");
 				console.log(curLoc);
 			});
@@ -388,86 +393,209 @@ class ResourceProvider {
 			console.log(topologyData);
 			var multiSecData = await self._getCollectionAllDocs(multiviewDb, self.mongoConfig.collectionMap.multiSecBoxes);
 			console.log(multiSecData);
-			await self._enrichTopologyData(topologyData[0], multiSecData);
+			await self._enrichTopologyWithSecData(topologyData[0], multiSecData);
 			await mongoClient.close();
 			callback(null, JSON.stringify(topologyData[0]));
 		}
 	}
 
-	_getLayerStatusData(_layerData){
-		// layerData.tower = tower status
-		// layerData.post = post status
-		// layerData.post.vbox = Status of VMs in Posts
-		// layerData.pbox = K-cube status
-		// layerData.pbox.vbox = status of VMs in K-cubes
+	//
+	// For Onion-ring 2D Visualization
+	//
+	_findBoxFromTopology(topology, matchingRule){
+		topoName = topology.name;
+		topoType = topology.type;
 
-		return new Promise(function(resolve, reject){
-			console.log("[ResourceProvider] _getLayerStatusData() is called" );
-			resolve(_layerData);
-		});
-	}
+		if (topology.name === matchingRule.name && topology.type === matchingRule.type) {
+			console.log("Found!: " + JSON.stringify(res));
+			return topology;
+		}
 
-	_getBoxStatusData(boxList, box_name){
-		for (i = 0; i < boxList.length; i++){
-			if (boxList[i].name === box_name){
-				return boxList[i];
-			}
+		if ( (topology.hasOwnProperty("contains")) && (topology.contains.length() !== 0) ){
+			topology.contains.forEach(elem => {
+				var res = null;
+				res = this._findBoxFromTopology(elem, matchingRule);
+				if (res !== null){
+					return res;
+				}
+			});
+		}
+
+		if ( (topology.hasOwnProperty("sublayer")) && (topology.sublayer.length() !== 0) ){
+			topology.sublayer.forEach(elem => {
+				var res = null;
+				res = this._findBoxFromTopology(elem, matchingRule);
+				if (res !== null){
+					return res;
+				}
+			});
 		}
 		return null;
 	}
 
-	getOnionRingData(callback){
+	_addVCboxesToTopology(boxStatus, topology, colorPallettes){
+		const tenantColorPallete = colorPallettes["tenantColorPallete"];
+		const statusColorPallete = colorPallettes["statusColorPallete"];
+
+		boxStatus.forEach(box => {
+			// select the boxes having type virtual/container
+			var boxType = box.type.split(".").pop();
+
+			var parentBoxType = null;
+			var parentBoxName = null;
+
+			if (boxType === "vcbox"){
+				// find the physical box which is a parent of this virtual/container box.
+				// parent name, parent type
+				parentBoxType = box.type.split(".");
+				parentBoxType.pop();
+
+				parentBoxName = box.where.split(".");
+				parentBoxName.pop();
+
+				rule = {
+					"name": parentBoxName,
+					"type": parentBoxType
+				};
+
+				parentPhysicalBox = this._findBoxFromTopology(topology, rule);
+
+				if (parentPhysicalBox !== null){
+					// Create a box instance for the virtual/container box
+					vcBoxInst = {}
+					vcBoxInst["name"] = box.name;
+					vcBoxInst["description"] = box.name;
+					vcBoxInst["statusColor"] = statusColorPallete[2];
+					vcBoxInst["tenantColor"] = tenantColorPallete[1];
+
+					// Insert the created instance to the located physical box
+					parentPhysicalBox.contains.push(vcBoxInst);
+				}				
+			}
+		});
+	}
+
+	_findBoxStatusElement(boxStatus, matchingRule){
+		var matchedBox = null;
+		boxStatus.some(box => {
+			var check = true
+			Object.keys(matchingRule).forEach(k => {
+				// console.log("key: "+ k);
+				// console.log(box[k].toLowerCase() + matchingRule[k].toLowerCase());
+				if (box[k].toLowerCase() !== matchingRule[k].toLowerCase()) {
+					console.log(box[k].toLowerCase() + " " + matchingRule[k].toLowerCase());
+					check = false;
+				}
+			});
+
+			if (check === true) matchedBox = box;
+			return check;
+		});
+
+		return matchedBox;
+	}
+
+	_enrichTopologyWithStatusData(topology, boxStatus, colorPallettes){
+		console.log("_enrichTopologyWithStatusData() " + topology.name);
+		const tenantColorPallete = colorPallettes["tenantColorPallete"];
+		const statusColorPallete = colorPallettes["statusColorPallete"];
+
+		var rule = null;
+		var boxStatusElement = null;
+
+		rule = {"name": topology.name};
+		boxStatusElement = this._findBoxStatusElement(boxStatus, rule);
+
+		// Add Status Color
+		if ( !(topology.hasOwnProperty("statusColor"))) {
+
+			if (boxStatusElement !== null && boxStatusElement.hasOwnProperty("reachable")){
+
+				let idx = boxStatusElement["reachable"];
+				topology["statusColor"] = statusColorPallete[idx];
+			} else {
+				topology["statusColor"] = statusColorPallete[0];
+			}
+		} 
+
+		// Add Tenant Color
+		if (!(topology.hasOwnProperty("tenantColor"))){
+			// console.log("Fill tenantColor");
+			let tenantIdx = 0;
+			if (boxStatusElement !== null && boxStatusElement.hasOwnProperty("tenant")){
+				tenantIdx = 1;
+			}
+			topology["tenantColor"] = tenantColorPallete[tenantIdx];
+		}
+
+		// Add Description
+		if (!(topology.hasOwnProperty("description"))){
+			// console.log("Fill Description");
+			topology["description"] = topology["name"];
+		}
+
+		// The field "value" will be used by psd3 to determine the size of ring segments
+		topology["value"] = 1;
+
+		// Traverse other elements on outer layers
+		if (topology.hasOwnProperty("contains")){
+			topology.contains.forEach(containedBoxes => {
+				this._enrichTopologyWithStatusData(containedBoxes, boxStatus, colorPallettes);
+			});
+		}
+		if (topology.hasOwnProperty("sublayer")){
+			topology.sublayer.forEach(subBoxes => {
+				this._enrichTopologyWithStatusData(subBoxes, boxStatus, colorPallettes);
+			});
+		}
+
+		
+	}
+
+	async getOnionRingData(callback){
 		console.log("[ResourceProvider] getOnionRingData() is called");
 
 		var readFromFile = false;
-		var topologyData, multiSecData;
+		var topologyData;
 		var mongoClient, multiviewDb;
 		var self = this;
 
+		const colorPallettes = {
+			"statusColorPallete": ["#EFEFEF", "#FFFF66", "#90FF90"],
+			"tenantColorPallete": ["LightGrey", "red", "blue", "green", "black"]
+		}
+
 		if (readFromFile){
-			self._getTopologyDataFromFile("topology-k1.scenario3.json")
-			.then(
+			self._getTopologyDataFromFile("topology-k1.scenario3.json").then(
 				function(_topologyData){
 					topologyData = _topologyData
 				}
 			)
 			.then(
-
-			)
-			.then(
-
-			)
-		}
-
-		if (this.playgroundConfig.type === "k1"){
-			console.log("[ResourceProvider | getOnionRingData()] Playground Type: K1");
-
-			var self = this;
-			self._getTopologyDataFromFile("topology-k1.scenario3.json")
-			.then( 
-				function(_topologyData){
-					topologyData = _topologyData;
-				}
-			)
-			.then ( self._getLayerStatusData(layerData) )
-			.then ( 
-				function(_layerData){
-					layerData = _layerData;
-				}
-			).then(
 				function(){
 					console.log(topologyData);
-					console.log(layerData);
-					callback(null, JSON.stringify(topologyData))
+					callback(null, JSON.stringify(topologyData));
 				}
 			);
-			
 		} else {
-			this._getTopologyDataFromFile(topologyData, "topology-k1.json")
-			.then(callback(null, JSON.stringify(topologyData)));
+			mongoClient = await new MongoClient(this.mongoUrl, { useUnifiedTopology: true }).connect();
+			multiviewDb = mongoClient.db(self.mongoConfig.multiviewDb);
+	
+			var topologyData = await self._getCollectionDoc(multiviewDb, self.mongoConfig.collectionMap.playgroundTopology, {"type": "2d"})
+			console.log(topologyData);
+
+			var pvBoxStatusData = await self._getCollectionAllDocs(multiviewDb, self.mongoConfig.collectionMap.pvBoxStatus);
+			console.log(pvBoxStatusData);
+
+			await self._addVCboxesToTopology(pvBoxStatusData, topologyData[0].playground_topology);
+			await self._enrichTopologyWithStatusData(topologyData[0].playground_topology, pvBoxStatusData);
+			
+			mongoClient.close();
+			topologyData = JSON.stringify([topologyData[0].playground_topology]);
+			console.log(topologyData);
+			callback(null, topologyData);		
 		}
 	}
-
 
 	//ManhNT
 	getDataMultiSliceVisibility(userID, callback) {

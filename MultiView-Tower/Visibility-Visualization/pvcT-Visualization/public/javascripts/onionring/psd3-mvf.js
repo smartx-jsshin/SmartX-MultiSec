@@ -98,7 +98,7 @@ psd3.Pie.prototype.findMaxDepth = function(dataset) {
         if (maxOfInner < maxInnerLevel) {
             maxOfInner = maxInnerLevel;
         }
-        if (dataset[i].hasOwnProperty("innerElements")){
+        if (dataset[i].hasOwnProperty("contains")){
             hasInnerElements = true;
         }
     }
@@ -384,14 +384,14 @@ psd3.Pie.prototype.draw = function(svg, totalRadius, dataset, originalDataset, o
         var _nextInnerRadius = innerRadius;
         var _nextOuterRadius = outerRadius;
 
-        if (dataset[j].hasOwnProperty('innerElements')){
+        if (dataset[j].hasOwnProperty('contains')){
             _nextInnerRadius = innerRadius + radiusDelta;
             _nextOuterRadius = outerRadius + radiusDelta;
 
-            if (dataset[j]['innerElements'].length !== 0){
+            if (dataset[j]['contains'].length !== 0){
                 _this.draw(svg, 
                     totalRadius, 
-                    dataset[j]['innerElements'], 
+                    dataset[j]['contains'], 
                     originalDataset, 
                     originalDatasetLength, 
                     _nextInnerRadius, 

@@ -21,7 +21,7 @@
         ],
         "sublayer": [
             {
-                "name": "GIST",
+                "name": "GJ",
                 "description": "GIST Site",
                 "statusColor": "white",
                 "tenantColor": "LightGrey",
@@ -126,7 +126,7 @@
                 ]
             },
             {
-                "name": "POSTECH",
+                "name": "PO",
                 "description": "POSTECH Site",
                 "statusColor": "white",
                 "tenantColor": "LightGrey",
@@ -165,7 +165,7 @@
                 ]
             },
             {
-                "name": "KAIST",
+                "name": "KA",
                 "description": "KAIST Site",
                 "statusColor": "white",
                 "tenantColor": "LightGrey",

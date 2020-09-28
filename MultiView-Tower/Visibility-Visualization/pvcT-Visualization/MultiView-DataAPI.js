@@ -12,12 +12,6 @@ class ResourceProvider {
 			"@" + this.mongoConfig.ipaddr + ":" + this.mongoConfig.port +
 			"/" + this.mongoConfig.authDb;
 		console.log("[ResourceProvider] " + "MongoDB URL : " + this.mongoUrl);
-		// this.mongoConfig = require("./config.json").mongodb;
-		// this.mongoUrl = 
-		// 	"mongodb://" + this.mongoConfig.userId + ":" + this.mongoConfig.userPassword +
-		// 	"@" + this.mongoConfig.mongodbHost + ":" + this.mongoConfig.mongodbPort +
-		// 	"/" + this.mongoConfig.multiviewDb;
-		// console.log("[ResourceProvider] " + "MongoDB URL : " + this.mongoUrl);
 	}
 	
 	//Get MultiView Users
@@ -403,70 +397,97 @@ class ResourceProvider {
 	// For Onion-ring 2D Visualization
 	//
 	_findBoxFromTopology(topology, matchingRule){
-		topoName = topology.name;
-		topoType = topology.type;
-
-		if (topology.name === matchingRule.name && topology.type === matchingRule.type) {
-			console.log("Found!: " + JSON.stringify(res));
+		if (topology.name.toLowerCase() === matchingRule.name.toLowerCase()) {
 			return topology;
 		}
-
-		if ( (topology.hasOwnProperty("contains")) && (topology.contains.length() !== 0) ){
-			topology.contains.forEach(elem => {
-				var res = null;
+		if ( (topology.hasOwnProperty("contains")) && (topology.contains.length !== 0) ){
+			var res = null;
+			topology.contains.some(elem => {
 				res = this._findBoxFromTopology(elem, matchingRule);
 				if (res !== null){
-					return res;
+					return true;
 				}
 			});
+			if (res !== null){
+				return res;
+			}
 		}
-
-		if ( (topology.hasOwnProperty("sublayer")) && (topology.sublayer.length() !== 0) ){
-			topology.sublayer.forEach(elem => {
-				var res = null;
+		if ( (topology.hasOwnProperty("sublayer")) && (topology.sublayer.length !== 0) ){
+			var res = null;
+			topology.sublayer.some(elem => {
 				res = this._findBoxFromTopology(elem, matchingRule);
 				if (res !== null){
 					return res;
 				}
 			});
+			if (res !== null){
+				return res;
+			}
 		}
 		return null;
 	}
 
-	_addVCboxesToTopology(boxStatus, topology, colorPallettes){
+	_addVCboxesToTopology(boxStatus, topology, tenantList, colorPallettes){
 		const tenantColorPallete = colorPallettes["tenantColorPallete"];
 		const statusColorPallete = colorPallettes["statusColorPallete"];
+		console.log(tenantColorPallete);
 
 		boxStatus.forEach(box => {
 			// select the boxes having type virtual/container
-			var boxType = box.type.split(".").pop();
+			console.log("_addVCboxesToTopology(), Cur Box "+ box.name + " " + box.tier + " " + box.where);
+			var boxTier = box.tier.split(".").pop();
 
-			var parentBoxType = null;
+			var parentBoxTier = null;
 			var parentBoxName = null;
+			var parentPhysicalBox = null;
 
-			if (boxType === "vcbox"){
+			if (boxTier === "vcbox"){
 				// find the physical box which is a parent of this virtual/container box.
 				// parent name, parent type
-				parentBoxType = box.type.split(".");
-				parentBoxType.pop();
+				let tmpArr = box.tier.split(".");
+				tmpArr.pop();
+				parentBoxTier = "";
+				tmpArr.forEach(function(item, idx) {
+					parentBoxTier = parentBoxTier + item;
+					if (idx !== (tmpArr.length-1) ){
+						parentBoxTier = parentBoxTier + ".";
+					}
+				});
+				console.log("parentBoxTier: " + parentBoxTier);
 
 				parentBoxName = box.where.split(".");
-				parentBoxName.pop();
+				parentBoxName = parentBoxName[parentBoxName.length - 1]
 
-				rule = {
-					"name": parentBoxName,
-					"type": parentBoxType
+				// console.log("" + parentBoxTier + " " + parentBoxName);
+				var rule = {
+					"name": parentBoxName
 				};
 
+				console.log("")
 				parentPhysicalBox = this._findBoxFromTopology(topology, rule);
+				console.log("	parentPhysicalBox: " + parentPhysicalBox);
 
 				if (parentPhysicalBox !== null){
 					// Create a box instance for the virtual/container box
-					vcBoxInst = {}
+					var vcBoxInst = {}
 					vcBoxInst["name"] = box.name;
-					vcBoxInst["description"] = box.name;
-					vcBoxInst["statusColor"] = statusColorPallete[2];
-					vcBoxInst["tenantColor"] = tenantColorPallete[1];
+					// vcBoxInst["description"] = box.name;
+					vcBoxInst["statusColor"] = statusColorPallete[box.status];
+					
+					// var tenantIdx = 1;
+					// tenantList.some(function(tnt, idx) {
+					// 	console.log("tenant from tenantList: " + tnt.username + " " + idx);
+					// 	if (tnt.username === box.tenant){
+					// 		vcBoxInst["description"] = "Box Name: " + box.name + "," + "Tenant Name: " + tnt.username;
+					// 		if (tnt.hasOwnProperty("tenantColor") && tnt.tenantColor !== null){
+					// 			vcBoxInst["tenantColor"] = tnt.tenantColor;
+					// 		}else {
+					// 			tenantIdx = idx + 1;
+					// 			vcBoxInst["tenantColor"] = tenantColorPallete[tenantIdx];
+					// 		}
+					// 		return true;
+					// 	}
+					// });
 
 					// Insert the created instance to the located physical box
 					parentPhysicalBox.contains.push(vcBoxInst);
@@ -480,22 +501,21 @@ class ResourceProvider {
 		boxStatus.some(box => {
 			var check = true
 			Object.keys(matchingRule).forEach(k => {
-				// console.log("key: "+ k);
-				// console.log(box[k].toLowerCase() + matchingRule[k].toLowerCase());
 				if (box[k].toLowerCase() !== matchingRule[k].toLowerCase()) {
-					console.log(box[k].toLowerCase() + " " + matchingRule[k].toLowerCase());
 					check = false;
 				}
 			});
 
-			if (check === true) matchedBox = box;
+			if (check === true) {
+				matchedBox = box;
+			}
 			return check;
 		});
 
 		return matchedBox;
 	}
 
-	_enrichTopologyWithStatusData(topology, boxStatus, colorPallettes){
+	_enrichTopologyWithStatusData(topology, boxStatus, boxAllocMap, tenantList, colorPallettes){
 		console.log("_enrichTopologyWithStatusData() " + topology.name);
 		const tenantColorPallete = colorPallettes["tenantColorPallete"];
 		const statusColorPallete = colorPallettes["statusColorPallete"];
@@ -508,50 +528,91 @@ class ResourceProvider {
 
 		// Add Status Color
 		if ( !(topology.hasOwnProperty("statusColor"))) {
-
-			if (boxStatusElement !== null && boxStatusElement.hasOwnProperty("reachable")){
-
-				let idx = boxStatusElement["reachable"];
+			if (boxStatusElement !== null && boxStatusElement.hasOwnProperty("status")){
+				let idx = boxStatusElement["status"];
 				topology["statusColor"] = statusColorPallete[idx];
 			} else {
 				topology["statusColor"] = statusColorPallete[0];
 			}
-		} 
+		}
 
+		if (boxStatusElement !== null){
+			// Find the tenant who occupies the box from Box Alloc table
+			var tenantName = null;
+			boxAllocMap.some(function(boxAlloc, idx){
+				if (boxAlloc.name === boxStatusElement.name){
+					tenantName = boxAlloc.tenant;
+					return true;
+				}
+				return false;
+			});
+
+			// Find the color of the tenant from the tenant list
+			var tenantColor = null;
+			if (tenantName !== null){
+				tenantList.some(function(tnt, idx) {
+					console.log("tenant from tenantList: " + tnt.username + " " + idx);
+					if (tnt.username === tenantName){
+						tenantColor = tnt.tenantColor;
+						return true;
+					}
+				});
+			}
+
+			if (tenantName === null || tenantColor === null){
+				tenantName = "operator";
+				tenantColor = "black";
+			}
+
+			topology["tenantColor"] = tenantColor;
+			var boxDesc = "Box Name: " + topology.name + ", " + "Tenant Name: " + tenantName;
+			if (boxStatusElement["status"] === 2){
+				boxDesc = boxDesc + ", Status: Active"; 
+			} else if (boxStatusElement["status"] === 0){
+				boxDesc = boxDesc + ", Status: Inctive"; 
+			}
+			topology["description"] = boxDesc;
+
+		}
+
+		// if (boxStatusElement !== null && boxStatusElement.hasOwnProperty("tenant")){
+		// 	tenantList.some(function(tnt, idx) {
+		// 		console.log("tenant from tenantList: " + tnt.name + " " + idx);
+		// 		if (tnt.username === boxStatusElement.tenant){
+		// 			topology["tenantColor"] = tnt.tenantColor;
+		// 			topology["description"] = "Box Name: " + topology.name + "," + "Tenant Name: " + tnt.username;
+		// 			return true;
+		// 		}
+		// 	});
+		// }
+
+		// Add the default values to unassigned attributes for the visualization
 		// Add Tenant Color
 		if (!(topology.hasOwnProperty("tenantColor"))){
-			// console.log("Fill tenantColor");
-			let tenantIdx = 0;
-			if (boxStatusElement !== null && boxStatusElement.hasOwnProperty("tenant")){
-				tenantIdx = 1;
-			}
+			let tenantIdx = 1;
 			topology["tenantColor"] = tenantColorPallete[tenantIdx];
 		}
-
 		// Add Description
 		if (!(topology.hasOwnProperty("description"))){
-			// console.log("Fill Description");
-			topology["description"] = topology["name"];
+			topology["description"] = "Box Name: " + topology.name + "," + "Tenant Name: operator";
 		}
-
 		// The field "value" will be used by psd3 to determine the size of ring segments
 		topology["value"] = 1;
+
 
 		// Traverse other elements on outer layers
 		if (topology.hasOwnProperty("contains")){
 			topology.contains.forEach(containedBoxes => {
-				this._enrichTopologyWithStatusData(containedBoxes, boxStatus, colorPallettes);
+				this._enrichTopologyWithStatusData(containedBoxes, boxStatus, boxAllocMap, tenantList, colorPallettes);
 			});
 		}
 		if (topology.hasOwnProperty("sublayer")){
 			topology.sublayer.forEach(subBoxes => {
-				this._enrichTopologyWithStatusData(subBoxes, boxStatus, colorPallettes);
+				this._enrichTopologyWithStatusData(subBoxes, boxStatus, boxAllocMap, tenantList, colorPallettes);
 			});
 		}
-
-		
 	}
-
+	
 	async getOnionRingData(callback){
 		console.log("[ResourceProvider] getOnionRingData() is called");
 
@@ -559,11 +620,6 @@ class ResourceProvider {
 		var topologyData;
 		var mongoClient, multiviewDb;
 		var self = this;
-
-		const colorPallettes = {
-			"statusColorPallete": ["#EFEFEF", "#FFFF66", "#90FF90"],
-			"tenantColorPallete": ["LightGrey", "red", "blue", "green", "black"]
-		}
 
 		if (readFromFile){
 			self._getTopologyDataFromFile("topology-k1.scenario3.json").then(
@@ -580,6 +636,28 @@ class ResourceProvider {
 		} else {
 			mongoClient = await new MongoClient(this.mongoUrl, { useUnifiedTopology: true }).connect();
 			multiviewDb = mongoClient.db(self.mongoConfig.multiviewDb);
+
+			var tenantList = await self._getCollectionAllDocs(multiviewDb, self.mongoConfig.collectionMap.users);
+			var statusColorPallete = ["#EFEFEF", "#FFFF66", "#90FF90"];
+			var tenantColorPallete = ["LightGrey", "Black"];
+			const colorPallettes = {
+				"statusColorPallete": statusColorPallete,
+				"tenantColorPallete": tenantColorPallete
+			}
+
+			tenantList.forEach(tnt => {
+				if (tnt.role === "operator"){
+					var tntIdx = tenantList.indexOf(tnt);
+					tenantList.splice(tntIdx, 1);
+				}else {
+					if (tnt.hasOwnProperty("tenantColor")){
+						tenantColorPallete.push(tnt.tenantColor);
+					} else{
+						var randomColor = "#" + Math.floor(Math.random()*16777215).toString(16);
+						tenantColorPallete.push(randomColor);
+					}
+				}
+			});
 	
 			var topologyData = await self._getCollectionDoc(multiviewDb, self.mongoConfig.collectionMap.playgroundTopology, {"type": "2d"})
 			console.log(topologyData);
@@ -587,8 +665,10 @@ class ResourceProvider {
 			var pvBoxStatusData = await self._getCollectionAllDocs(multiviewDb, self.mongoConfig.collectionMap.pvBoxStatus);
 			console.log(pvBoxStatusData);
 
-			await self._addVCboxesToTopology(pvBoxStatusData, topologyData[0].playground_topology);
-			await self._enrichTopologyWithStatusData(topologyData[0].playground_topology, pvBoxStatusData);
+			var boxAllocMap = await self._getCollectionAllDocs(multiviewDb, self.mongoConfig.collectionMap.boxAlloc);
+
+			await self._addVCboxesToTopology(pvBoxStatusData, topologyData[0].playground_topology, tenantList, colorPallettes);
+			await self._enrichTopologyWithStatusData(topologyData[0].playground_topology, pvBoxStatusData, boxAllocMap, tenantList, colorPallettes);
 			
 			mongoClient.close();
 			topologyData = JSON.stringify([topologyData[0].playground_topology]);

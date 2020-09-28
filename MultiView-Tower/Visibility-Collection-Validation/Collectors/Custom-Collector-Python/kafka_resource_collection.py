@@ -23,23 +23,17 @@ def load_setting(_file_path):
         else:
             return None
 
-def format_mongodb_msg(_msg):
-    # cpu, memory, os, disk, network
-    # name, where, type, timestamp
-    return 1
-
 def store_to_mongodb(mongo_col, msg):
     # Find the document having same field values "name", "where", "type"
     # Update all specs to the matching document
     matching_rule = dict()
     matching_rule["name"] = msg.pop("name")
     matching_rule["where"] = msg.pop("where")
-    matching_rule["type"] = msg.pop("type")
     
     if mongo_col.find_one_and_update(filter=matching_rule, update={"$set": msg}):
-        _logger.debug("Updating MongoDB was successful: {}, {}".format(matching_rule, msg))
+        _logger.info("Updating MongoDB was successful: {}, {}".format(matching_rule, msg))
     else:
-        _logger.debug("Updating MongoDB was failed: {}, {}".format(matching_rule, msg))
+        _logger.info("Updating MongoDB was failed: {}, {}".format(matching_rule, msg))
     
         
 def format_influxdb_msg(_msg, table_name):
@@ -47,7 +41,7 @@ def format_influxdb_msg(_msg, table_name):
     _tags = dict()
     _fields = dict()
     
-    tag_keys = ["name", "where", "type"]
+    tag_keys = ["name", "where", "tier"]
 
     for k, v in _msg.items():
         if k in tag_keys:
@@ -71,9 +65,9 @@ def store_to_influxdb(_db_client, _db_name, _msg):
         _db_client.create_database(_db_name)
 
     if _db_client.write_points(_msg, database=_db_name):
-        _logger.debug("Writing InfluxDB was successful: {}".format(_msg))
+        _logger.info("Writing InfluxDB was successful: {}".format(_msg))
     else:
-        _logger.debug("Writing InfluxDB was failed: {}".format(_msg))
+        _logger.info("Writing InfluxDB was failed: {}".format(_msg))
     
 
 if __name__ == "__main__":
@@ -127,11 +121,11 @@ if __name__ == "__main__":
             msg_val = json.loads(message.value.decode('utf-8'))
 
             if msg_type == "status":
-                _logger.info("status message is received: {}, {}, {}".format(msg_val["name"], msg_val["where"], msg_val["type"]))
+                _logger.debug("status message is received: {}, {}, {}".format(msg_val["name"], msg_val["where"], msg_val["tier"]))
                 store_to_mongodb(rstatus_col, msg_val)
                 
             elif msg_type == "performance":
-                _logger.info("performance message is received: {}, {}, {}".format(msg_val["name"], msg_val["where"], msg_val["type"]))
+                _logger.debug("performance message is received: {}, {}, {}".format(msg_val["name"], msg_val["where"], msg_val["tier"]))
                 _msg = format_influxdb_msg(msg_val, _tdb_table_name)
                 store_to_influxdb(tdb_cli, _tdb_db_name, _msg)
 

@@ -430,9 +430,16 @@ psd3.Pie.prototype.reDrawPie = function(d, ds) {
         .remove()
         .each("end", function() {
             if (d.length == 1) {
-              if(d.data.childElements.length == 0){
+              if( !(d.data.hasOwnProperty("sublayer")) || d.data.sublayer.length === 0){
               tmp = _this.config.data;
               }
+            //   if( d.data.hasOwnProperty("sublayer")){
+            //       console.log(d.data.sublayer);
+            //     if(d.data.sublayer.length === 0){
+            //         console.log(_this.config.data);
+            //         tmp = _this.config.data;
+            //     }
+            //   } 
               else{
                 tmp.push(d.data);
                 _this.zoomStack.push(ds);

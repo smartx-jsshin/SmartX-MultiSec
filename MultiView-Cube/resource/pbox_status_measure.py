@@ -213,17 +213,19 @@ def publish_msg(mq_url, topic, msg_key, msg_value):
         encoded_val = json.dumps(msg_value).encode('utf-8')
     elif isinstance(msg_value, str):
         encoded_val = msg_value.encode('utf-8')
-
-    logging.getLogger(__name__).debug(encoded_key)
-    logging.getLogger(__name__).debug(encoded_val)
+    
     producer.send(topic, key=encoded_key, value=encoded_val)
     producer.close()
+    
+    logging.getLogger(__name__).info("Message Published to {} / {}".format(mq_url, topic))
+    logging.getLogger(__name__).info("Published Message: {}".format(msg_value))
 
 def format_msg(msg, msg_type, box_config):
     if msg_type in ["status", "performance"]:
         msg["name"] = box_config["name"] # Box name
         msg["where"] = box_config["where"] # Box Location
-        msg["type"] = box_config["type"] # Box Type
+        msg["tier"] = box_config["tier"] # Box Type
+        msg["tenant"] = box_config.get("tenant", "operator")
         msg["timestamp"] = datetime.now(timezone('Asia/Seoul')).strftime("%Y-%m-%dT%H:%M:%SZ")
         return msg
 

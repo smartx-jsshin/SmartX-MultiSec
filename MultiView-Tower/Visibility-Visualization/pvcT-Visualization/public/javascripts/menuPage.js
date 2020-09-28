@@ -132,6 +132,8 @@ function draw() {
     // var service = document.getElementById('servicecentricviewops');
     // var sliceview = document.getElementById('sliceview');
     // var sliceviewtenant = document.getElementById('sliceviewtenant');
+    document.getElementById('firstIFrameHeader').innerHTML = "Onion-ring-based Visualization (Operator)";
+    iframe1.src = rootUrl + '/onionring/onionring2d';
 
     tcptopology.addEventListener('click', function () {
         console.log("TCP Topology Button was clicked");

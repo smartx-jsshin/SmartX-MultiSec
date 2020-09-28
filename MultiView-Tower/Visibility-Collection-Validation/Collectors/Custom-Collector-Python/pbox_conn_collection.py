@@ -9,8 +9,9 @@ import socket
 import time
 from multiprocessing import Process, Queue
 from datetime import datetime
+from pytz import timezone
 
-from pymongo import MongoClient
+from pymongo import MongoClient, ReturnDocument
 from ping3 import ping
 
 _logger = logging.getLogger(__name__)
@@ -35,9 +36,11 @@ def format_msg(pbox_config, status):
     # Box name, box type, where, box status, mangement plane, security status
     _msg_dict = dict()
     _msg_dict["name"] = pbox_config["name"]
-    _msg_dict["type"] = pbox_config["type"]
+    _msg_dict["tier"] = pbox_config["tier"]
     _msg_dict["where"] = pbox_config["where"]
-    _msg_dict["reachable"] = status
+    _msg_dict["status"] = status
+    _msg_dict["timestamp"] = datetime.now(timezone('Asia/Seoul')).strftime("%Y-%m-%dT%H:%M:%SZ")
+
 
     for net in pbox_config["network"]:
         if net["plane"].lower() == "management":
@@ -70,7 +73,7 @@ def isPingable(_ipaddr, timeout=0.3):
 
 def isAccessible(_pbox_config, _docs_queue, _unavail_queue):
     for net in pbox_config["network"]:
-        if net["plane"] == "management" and net.get("ipaddr", None):
+        if net["plane"].lower() == "management" and net.get("ipaddr", None):
             check = 0
 
             if isPingable(net["ipaddr"]):
@@ -79,11 +82,10 @@ def isAccessible(_pbox_config, _docs_queue, _unavail_queue):
             if isOpen(net["ipaddr"], 22):
                 check += 1
 
+            _msg = format_msg(_pbox_config, check)
             if check > 0:
-                _msg = format_msg(_pbox_config, check)
                 _docs_queue.put(_msg)
             else:
-                _msg = {"name": pbox_config["name"], "where": pbox_config["where"]}
                 _unavail_queue.put(_msg)
 
 if __name__ == "__main__":
@@ -95,7 +97,7 @@ if __name__ == "__main__":
     if not _setting:
         raise FileNotFoundError(file_path)
 
-    _mongo_setting = _setting["resource-db"]
+    _mongo_setting = _setting["document-db"]
     _mongo_cli = MongoClient(host=_mongo_setting["ipaddr"], 
                             port=int(_mongo_setting["port"]), 
                             username=_mongo_setting["userId"], 
@@ -121,22 +123,44 @@ if __name__ == "__main__":
                 for proc in procs:
                     proc.join()
 
+            _msg = {"name": pbox_config["name"], "where": pbox_config["where"]}
             unavail_queries = list()
             while not unavail_queue.empty():
-                unavail_query = unavail_queue.get()
-                delDocs = status_col.find_one_and_delete(unavail_query)
+                unavail_box = unavail_queue.get()
+                # Set the status "INACTIVE" of the unavailable physical boxes                 
+                # delDocs = status_col.find_one_and_delete(matching)
+                newDoc = status_col.find_one_and_update(
+                    filter={"name": unavail_box["name"], "where": unavail_box["where"]},
+                    update={ "$set": {"status": unavail_box["status"]}}
+                )
 
-                if delDocs:
-                    _logger.info("Delete the doc for an unavilable box: {}".format(unavail_query))
+                # Set the status "INACTIVE" of all virtual boxes in the unavailable physical boxes
+                if newDoc:
+                    _logger.info("Set the status INACTIVE of the physical box: {}".format(newDoc))
+
+                where_val = "{}.{}".format(unavail_box["where"], unavail_box["name"])
+                vbox_docs = status_col.find({"where": where_val})
+
+                for vbox_doc in vbox_docs:
+                    matching = {"name": vbox_doc["name"], "where": vbox_doc["where"]}
+                    newDoc = status_col.find_one_and_update(
+                        filter={"name": vbox_doc["name"], "where": vbox_doc["where"]},
+                        update={ "$set": {"status": 0}},
+                        return_document=ReturnDocument.AFTER
+                    )
+
+                    if newDoc:
+                        _logger.info("Set the status INACTIVE of the virtual box: {}".format(newDoc))
+
 
             while not docs_queue.empty():
                 pbox_doc = docs_queue.get()
                 oldDoc = status_col.find_one_and_update(
                     filter={"name": pbox_doc["name"], "where": pbox_doc["where"]},
-                    update={ "$set": {"reachable": pbox_doc["reachable"]}})
+                    update={ "$set": {"status": pbox_doc["status"]}})
                     
                 if oldDoc:
-                    _logger.info("Find and update the matched doc: {}, {}, {}".format(pbox_doc["name"], pbox_doc["where"], pbox_doc["reachable"]))
+                    _logger.info("Find and update the matched doc: {}, {}, {}".format(pbox_doc["name"], pbox_doc["where"], pbox_doc["status"]))
                 else:
                     status_col.insert(pbox_doc)
                     _logger.info("Insert a new doc: {}".format(pbox_doc))

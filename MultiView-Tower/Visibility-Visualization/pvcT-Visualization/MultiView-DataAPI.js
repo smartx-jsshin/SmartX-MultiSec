@@ -5,7 +5,10 @@ const { resolve } = require('path');
 
 class ResourceProvider {
 	constructor() {
-		this.playgroundConfig = require("./config.json").playground;
+		this.mvfConfig = require("./config.json");
+		this.vCenterIp = this.mvfConfig.vCenter.host;
+		this.vCenterPort = this.mvfConfig.vCenter.port;
+		
 		this.mongoConfig = require("./config.json")["document-db"];
 		this.mongoUrl = 
 			"mongodb://" + this.mongoConfig.userId + ":" + this.mongoConfig.userPassword +
@@ -392,6 +395,14 @@ class ResourceProvider {
 			callback(null, JSON.stringify(topologyData[0]));
 		}
 	}
+
+	async getNew3DData(callback) {
+		this.getOnionRing3DData(function(err, topologyData){
+			console.log(topologyData);
+			callback(err, topologyData);
+		});
+	}
+
 
 	//
 	// For Onion-ring 2D Visualization

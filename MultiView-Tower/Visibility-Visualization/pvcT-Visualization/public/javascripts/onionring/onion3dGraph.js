@@ -1,74 +1,58 @@
-function decodeHtmltoJson(text){
-    // console.log("Before Decoding: " + onionRingData);
+class OnionRing3DVisualizer{
+    constructor(ringSize, heightScale) {
+        // Sizing variables for ring segments
+        this.ringSize = 5;
+        this.pieceHeightScale = 3;
+        this.defaultHeight = 0.2 * this.pieceHeightScale;
+        this.radiusMargin = 0.2;
+        this.angleMargin = 0.15;
 
-    var textArea = document.createElement('textarea');
-    textArea.innerHTML = text;
-    var jsonFromText = JSON.parse(textArea.value);
+        // Color definition for ring segments
+        this.resourceColorPallete = [ 0xC0C0C0, 0xC0C0C0, 0x008000, 0x008000, 0x008000, 0xFFFF00, 0xFFFF00, 0x0000FF ] // Silver, Silver, Green, Green, Green, Yellow, Yellow, Blue
+        this.securityColorPallete = [ 0x808080, 0x00FF000, 0x66FF000, 0x99FF000, 0xCCFF000, 0xFFFF00, 0xFFCC00, 0xFF9900, 0xFF6600, 0xFF3300, 0xFF0000 ] // Gray, Green, Yellow, Red
+        
+        // Instance Attributes for onion-ring topology
+        this.tierDef = null;
+        this.pgTopo = null;
+        
+        this.scene = null;      
+        this.camera = null;
+        this.renderer = null;
+    }
 
-    // console.log("After Decoding: ");
-    // console.log(jsonFromText);
-
-    return jsonFromText;
-}
-
-function draw() {
-    // Configuration Variables for Onion-ring
-    console.log("Start onion3dGraph.Draw()");
-
-    const ringSize = 5;
-    const pieceHeightScale = 3;
-    const defaultHeight = 0.2 * pieceHeightScale;
-    const resourceColorPallete = [ 0xC0C0C0, 0xC0C0C0, 0x008000, 0x008000, 0x008000, 0xFFFF00, 0xFFFF00, 0x0000FF ] // Silver, Silver, Green, Green, Green, Yellow, Yellow, Blue
-    const securityColorPallete = [ 0x808080, 0x00FF000, 0x66FF000, 0x99FF000, 0xCCFF000, 0xFFFF00, 0xFFCC00, 0xFF9900, 0xFF6600, 0xFF3300, 0xFF0000 ] // Gray, Green, Yellow, Red
+    decodeHtmltoJson(text){
+        var textArea = document.createElement('textarea');
+        textArea.innerHTML = text;
+        var jsonFromText = JSON.parse(textArea.value);
     
-    const onionRing3DDataJson = decodeHtmltoJson(onionRing3DData);
-    console.log(onionRing3DDataJson);
-
-    const tierDef = onionRing3DDataJson.tier_definition;
-    const pgTopo = onionRing3DDataJson.playground_topology;
-    console.log(tierDef);
-    console.log(pgTopo);
-
-    const radiusMargin = 0.2;
-    const angleMargin = 0.15;
-
-
-    //Document Management
-    var container;
-    container = document.createElement( 'div' );
-    document.body.appendChild( container );
-
-
-    // Basic ThreeJS Configuration (Scene, Camera, Light)
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
-    camera.position.set( 0, 0, 100 );
-    scene.add( camera );
-
-    const light = new THREE.PointLight( 0xffffff, 0.9 );
-    camera.add( light );
-
+        return jsonFromText;
+    }
+    
+    loadTopology(topologyJson){
+        const onionRing3DDataJson = this.decodeHtmltoJson(topologyJson);
+        this.tierDef = onionRing3DDataJson.tier_definition;
+        this.pgTopo = onionRing3DDataJson.playground_topology;
+    }
 
     // Creating a piece of onion-ring
-    function degreeToRadian(degree){
+    degreeToRadian(degree){
         const radian = Math.PI * degree / 180;
         return radian;
     }
 
-    function getCircleX(xCenter, radius, radian){
+    getCircleX(xCenter, radius, radian){
         const x = xCenter + radius * Math.cos(radian);
         //console.log("xCenter:" + xCenter + " x: " + x + " r:" + radius + " radian:" + radian);
         return x;
     }
 
-    function getCircleY(yCenter, radius, radian){
+    getCircleY(yCenter, radius, radian){
         const y = yCenter + radius * Math.sin(radian);
         //console.log("yCenter:" + yCenter + " y: " + y + " r:" + radius + " radian:" + radian);
         return y;
     }
 
-    function getExtrudeSetting( ringHeight ){
+    getExtrudeSetting( ringHeight ){
         const extrudeSetting = { 
             amount: ringHeight, 
             bevelEnabled: true, 
@@ -79,7 +63,7 @@ function draw() {
         return extrudeSetting;
     }
 
-    function createTextMesh ( txt, posX, posY, posZ ){
+    createTextMesh ( txt, posX, posY, posZ ){
         console.log("[createTextMesh]" + " txt: " + txt + " txtPosX: " + posX + " txtPosY: " + posY + " txtPosZ: " + posZ);
 
         var loader = new THREE.FontLoader();
@@ -108,67 +92,68 @@ function draw() {
         return txtMesh;
     }
 
-    function createCenterCircle( layerNum, pieceColor, height, pieceName ){
+    createCenterCircle( layerNum, pieceColor, height, pieceName ){
         if (layerNum != 1){
             return null;
         }
         console.log("[createCenterCircle]" + " layerNum: " + layerNum + " pieceColor: " + pieceColor + " height: " + height);
 
-        const radius = ringSize - radiusMargin;
+        const radius = this.ringSize - this.radiusMargin;
         const centerCircleShape = new THREE.Shape();
         centerCircleShape.moveTo(0, 0);
-        centerCircleShape.absarc(0, 0, radius, degreeToRadian(0), degreeToRadian(360), false);
+        centerCircleShape.absarc(0, 0, radius, this.degreeToRadian(0), this.degreeToRadian(360), false);
 
-        const extrudeSetting = getExtrudeSetting(height);
+        const extrudeSetting = this.getExtrudeSetting(height);
         const geometry = new THREE.ExtrudeGeometry( centerCircleShape, extrudeSetting );
         const centerCircleMesh = new THREE.Mesh ( geometry, new THREE.MeshPhongMaterial( { color: pieceColor }) );
+        centerCircleMesh.name = pieceName;
 
         const txtPosX = 0
         const txtPosY = 0
         const txtPosZ = height + 1;
         const txtRotation = 0;
-        const txtMesh = createTextMesh(pieceName, txtPosX, txtPosY, txtPosZ);
+        const txtMesh = this.createTextMesh(pieceName, txtPosX, txtPosY, txtPosZ);
         centerCircleMesh.add(txtMesh);
 
         return centerCircleMesh;
     }
 
-    function createRingPiece( layerNum, pieceColor, height, startDegree, endDegree, pieceName ){
+    createRingPiece( layerNum, pieceColor, height, startDegree, endDegree, pieceName ){
         if (layerNum < 2 || startDegree < 0 || endDegree > 360){
             return null;
         }
 
-        const innerRadius = (ringSize * (layerNum - 1)) + radiusMargin;
-        const outerRadius = (ringSize * layerNum) - radiusMargin;
-        const startRadian = degreeToRadian(startDegree + angleMargin);
-        const endRadian = degreeToRadian(endDegree - angleMargin);
+        const innerRadius = (this.ringSize * (layerNum - 1)) + this.radiusMargin;
+        const outerRadius = (this.ringSize * layerNum) - this.radiusMargin;
+        const startRadian = this.degreeToRadian(startDegree + this.angleMargin);
+        const endRadian = this.degreeToRadian(endDegree - this.angleMargin);
 
         console.log("[createRingPiece]" + " layerNum: " + layerNum + " pieceColor: " + pieceColor + " height: " + height + " startDegree: "+ startDegree + " endDegree: " + endDegree);
 
         const ringPieceShape = new THREE.Shape();
-        ringPieceShape.moveTo(getCircleX(0, innerRadius, startRadian), getCircleY(0, innerRadius, startRadian));
+        ringPieceShape.moveTo(this.getCircleX(0, innerRadius, startRadian), this.getCircleY(0, innerRadius, startRadian));
         ringPieceShape.absarc(0, 0, innerRadius, startRadian, endRadian, false);
-        ringPieceShape.lineTo(getCircleX(0, outerRadius, endRadian), getCircleY(0, outerRadius, endRadian));
+        ringPieceShape.lineTo(this.getCircleX(0, outerRadius, endRadian), this.getCircleY(0, outerRadius, endRadian));
         ringPieceShape.absarc(0, 0, outerRadius, endRadian, startRadian, true);
-        ringPieceShape.lineTo(getCircleX(0, innerRadius, startRadian), getCircleY(0, innerRadius, startRadian));
+        ringPieceShape.lineTo(this.getCircleX(0, innerRadius, startRadian), this.getCircleY(0, innerRadius, startRadian));
 
-        const extrudeSetting = getExtrudeSetting(height);
+        const extrudeSetting = this.getExtrudeSetting(height);
         const geometry = new THREE.ExtrudeGeometry( ringPieceShape, extrudeSetting );
         var ringPieceMesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: pieceColor } ) );
-
+        ringPieceMesh.name = pieceName;
 
         const midRadius = (outerRadius + innerRadius) / 2;
         const midRadian = (endRadian + startRadian) / 2;
-        const txtPosX = getCircleX(0, midRadius, midRadian);
-        const txtPosY = getCircleY(0, midRadius, midRadian);
+        const txtPosX = this.getCircleX(0, midRadius, midRadian);
+        const txtPosY = this.getCircleY(0, midRadius, midRadian);
         const txtPosZ = height + 1;
-        const txtMesh = createTextMesh(pieceName, txtPosX, txtPosY, txtPosZ);
+        const txtMesh = this.createTextMesh(pieceName, txtPosX, txtPosY, txtPosZ);
         ringPieceMesh.add(txtMesh);
 
         return ringPieceMesh;
     }
 
-    function drawRingSegments(listVar, startDegree, endDegree){
+    drawRingSegments(listVar, startDegree, endDegree){
         // Implementing Main Logic
         // Layer, Start Radian, End Radian
         var curElemCount = listVar.length;
@@ -191,21 +176,21 @@ function draw() {
 
             var pieceColor, height, layerNum;
             if ("securityLevel" in curElem){
-                height = (curElem.securityLevel) / 10 * pieceHeightScale + defaultHeight;
-                var palleteIdx = Math.ceil( (curElem.securityLevel) / (100 / (securityColorPallete.length - 1)) );
+                height = (curElem.securityLevel) / 10 * this.pieceHeightScale + this.defaultHeight;
+                var palleteIdx = Math.ceil( (curElem.securityLevel) / (100 / (this.securityColorPallete.length - 1)) );
                 if (palleteIdx == 0) palleteIdx = 1;
-                pieceColor = securityColorPallete[palleteIdx];
+                pieceColor = this.securityColorPallete[palleteIdx];
             } else {
-                height = defaultHeight;
-                pieceColor = securityColorPallete[0];
+                height = this.defaultHeight;
+                pieceColor = this.securityColorPallete[0];
             }
             console.log("height: " + height + " palleteIdx: " + palleteIdx);
 
             //
             // Get the tier of this element from the definition
             //
-            if (curElem.tier in tierDef){
-                layerNum = tierDef[curElem.tier];
+            if (curElem.tier in this.tierDef){
+                layerNum = this.tierDef[curElem.tier];
             } else{
                 layerNum = 0
             }
@@ -218,11 +203,11 @@ function draw() {
             if (layerNum == 0){
                 // Do not draw this element
             } else if (layerNum == 1){
-                const center = createCenterCircle(layerNum, pieceColor, height, curElem.name);
-                group.add(center);
+                const center = this.createCenterCircle(layerNum, pieceColor, height, curElem.name);
+                this.scene.add(center);
             } else {
-                const piece = createRingPiece(layerNum, pieceColor, height, curStartDegree, curEndDegree, curElem.name);
-                group.add(piece);
+                const piece = this.createRingPiece(layerNum, pieceColor, height, curStartDegree, curEndDegree, curElem.name);
+                this.scene.add(piece);
             }
 
             //
@@ -243,7 +228,7 @@ function draw() {
                 
                 console.log(children);
                 Object.keys(children).forEach(nextTierName => {
-                    drawRingSegments(children[nextTierName], curStartDegree, curEndDegree);
+                    this.drawRingSegments(children[nextTierName], curStartDegree, curEndDegree);
                 })
             }
             
@@ -255,44 +240,75 @@ function draw() {
         });
     }
 
-    const group = new THREE.Group();
-    scene.add( group );
-
-    console.log(pgTopo);
-    pgTopo.forEach(element =>{
-        drawRingSegments(element, 0, 360);
-    });
-
-    // Rendering Configuration
-    const renderer = new THREE.WebGLRenderer( { antialias: true } );
-    renderer.setClearColor( 0xf0f0f0 );
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.shadowMapEnabled = true;
-    renderer.shadowMapType = THREE.PCFSoftShadowMap;
-    
-    //group.castShadow = true;
-    //group.receiveShadow = false;
-
-    container.appendChild( renderer.domElement );
-    var controls = new THREE.OrbitControls( camera, renderer.domElement );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-
-    function animate() {
-
-        requestAnimationFrame( animate );
-    
-        render();
-    
+    animate() {
+        requestAnimationFrame( this.animate.bind(this) );
+        this.renderer.render( this.scene, this.camera );
+        // this.render();
     }
     
-    function render() {
-    
-        renderer.render( scene, camera );
-    
+    render() {
+        this.renderer.render( this.scene, this.camera );
     }
 
-    animate();
+    draw(){
+        // Basic ThreeJS Configuration (Scene, Camera, Light)
+        if (this.scene === null){ this.scene = new THREE.Scene(); }
+
+        if (this.camera === null){
+            this.camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
+            this.camera.position.set( 0, 0, 100 );
+            const light = new THREE.PointLight( 0xffffff, 0.9 );
+            this.camera.add( light );
+            this.scene.add( this.camera );
+        }
+
+        this.pgTopo.forEach(element =>{
+            this.drawRingSegments(element, 0, 360);
+        });
+
+        // Rendering Configuration
+        if (this.renderer === null){
+            this.renderer = new THREE.WebGLRenderer( { antialias: true } );
+            this.renderer.setClearColor( 0xf0f0f0 );
+            this.renderer.setPixelRatio( window.devicePixelRatio );
+            this.renderer.setSize( window.innerWidth, window.innerHeight );
+            this.renderer.shadowMapEnabled = true;
+            this.renderer.shadowMapType = THREE.PCFSoftShadowMap;
+            this.renderer.setSize( window.innerWidth, window.innerHeight );
+        }
+
+        //Document Management
+        var container;
+        container = document.createElement( 'div' );
+        document.body.appendChild( container );
+        container.appendChild( this.renderer.domElement );
+        var controls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
+
+        this.animate();
+    }
+
+    httpGetAsync(theUrl, callback)
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() { 
+            if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+                callback(xmlHttp.responseText);
+        }
+        xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+        xmlHttp.send(null);
+    }
 }
 
-draw()
+var vis = new OnionRing3DVisualizer(5, 3);
+vis.loadTopology(onionRing3DData);
+vis.draw();
+
+const source = new EventSource('/onionring/onionring3d/update');
+source.addEventListener('message', function(message) {
+    console.log('I have got a message', message);
+    // var piece = vis.scene.getObjectByName("K-ONE");
+    // console.log(vis.scene);
+    // console.log(piece);
+    // vis.scene.remove(piece);
+    // vis.animate();
+});

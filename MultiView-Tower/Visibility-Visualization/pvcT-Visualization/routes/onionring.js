@@ -9,29 +9,14 @@ module.exports = function(provider){
 	router.get('/onionring2d', function(req, res){
 		var data = null;
         console.log("[Router | onionring/onionring2d] Route to /onionring/onionring2d");
-		// resourceProvider.getDataMultiSliceVisibility(username, function(error, databj)
-		// {
-		// 	data = databj;
-		// 	showView();
-		// });
 
 		resourceProvider.getOnionRingData(function(error, databj){
 			data = databj;
 			showView();
 		});
 		
-		// resourceProvider.getControllerList(function(error, controllerobj)
-		// {
-		// 	controllerList = controllerobj;
-		// 	console.log(controllerList);
-		// 	showView();
-		// });
-		
 		function showView()
 		{
-			// if(data !== null && controllerList !== null){
-			// 	res.render('onionring2d.pug', {title: 'Onion-ring-based Visualization', data : JSON.stringify(data), controllerList : JSON.stringify(controllerList)});
-			// }
 			if(data !== null){
 				res.render('onionring/onionring2d.pug', {onionRingData: data});
 			}
@@ -50,13 +35,51 @@ module.exports = function(provider){
 		function showView()
 		{
 			if(data !== null){
-				console.log("Hello");
-				console.log(data);
 				res.render('onionring/onionring3d.pug', {onionRing3DData: data});
 			}
 		}
 	});
 
+	router.get('/onionring3d/update', function(req, res){
+		res.set({
+			"Content-Type": "text/event-stream",
+			"Cache-Control": "no-cache",
+			"Connection": "keep-alive",
+			"Access-Control-Allow-Origin": "*"
+		});
+		res.flushHeaders(); // flush the headers to establish SSE with client
+	
+		// let counter = 0;
+		// let interValID = setInterval(() => {
+		// 	counter++;
+		// 	if (counter >= 10) {
+		// 		clearInterval(interValID);
+		// 		res.end(); // terminates SSE session
+		// 		return;
+		// 	}
+		// 	res.write(`data: ${JSON.stringify({num: counter})}\n\n`); // res.write() instead of res.send()
+		// }, 1000);
+	
+		// If client closes connection, stop sending events
+
+		const pipeline = [ { $match: { runtime: { $lt: 15 } } } ];
+		const changeStream = await collection.watch(pipeline);
+
+		changeStream.on("change", (changeEvent) => { 
+			/* your callback function */ 
+		});
+
+		setTimeout(function(){
+			// send HTTP request to updateUrl
+			res.write(`data: ${JSON.stringify({msg: "Hello"})} \n\n`);
+			console.log("Test");
+		}, 1000);
+		
+		res.on('close', () => {
+			console.log('client dropped me');
+			res.end();
+		});
+	});
 	
 	router.get('/onionringviewtenant/*', function(req, res){
 		var data = null;

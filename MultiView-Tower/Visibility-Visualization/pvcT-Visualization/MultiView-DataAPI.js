@@ -16,7 +16,7 @@ class ResourceProvider {
 			"/" + this.mongoConfig.authDb;
 		console.log("[ResourceProvider] " + "MongoDB URL : " + this.mongoUrl);
 	}
-	
+
 	//Get MultiView Users
 	getUsers(callback) {
 		console.log("[ResourceProvider] getUsers() is called");
@@ -396,13 +396,13 @@ class ResourceProvider {
 		}
 	}
 
-	async getNew3DData(callback) {
-		this.getOnionRing3DData(function(err, topologyData){
-			console.log(topologyData);
-			callback(err, topologyData);
-		});
+	// for Live update codes for Onion 3D Visualization
+	async getMongoStatusCollection(){
+		var mongoClient = await new MongoClient(this.mongoUrl, { useUnifiedTopology: true }).connect();
+		var multiviewDb = mongoClient.db(this.mongoConfig.multiviewDb);
+		var collection = multiviewDb.collection(this.mongoConfig.collectionMap.boxStatus);
+		return collection;
 	}
-
 
 	//
 	// For Onion-ring 2D Visualization

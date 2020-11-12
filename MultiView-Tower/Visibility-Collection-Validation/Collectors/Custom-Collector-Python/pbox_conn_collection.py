@@ -15,7 +15,7 @@ from pymongo import MongoClient, ReturnDocument
 from ping3 import ping
 
 _logger = logging.getLogger(__name__)
-_logger.setLevel(logging.INFO)
+_logger.setLevel(logging.DEBUG)
 fm = logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s')
 sh = logging.StreamHandler()
 sh.setFormatter(fm)
@@ -38,15 +38,9 @@ def format_msg(pbox_config, status):
     _msg_dict["name"] = pbox_config["name"]
     _msg_dict["tier"] = pbox_config["tier"]
     _msg_dict["where"] = pbox_config["where"]
-    _msg_dict["status"] = status
-    _msg_dict["timestamp"] = datetime.now(timezone('Asia/Seoul')).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-    for net in pbox_config["network"]:
-        if net["plane"].lower() == "management":
-            _msg_dict["management_ip"] = net["ipaddr"]
-    
-    _msg_dict["security_level"] = None
+    _msg_dict["resource"] = status
+    # _msg_dict["timestamp"] = datetime.now(timezone('Asia/Seoul')).strftime("%Y-%m-%dT%H:%M:%SZ") 
+    _msg_dict["security"] = None
 
     return _msg_dict
 
@@ -72,7 +66,7 @@ def isPingable(_ipaddr, timeout=0.3):
     return res
 
 def isAccessible(_pbox_config, _docs_queue, _unavail_queue):
-    for net in pbox_config["network"]:
+    for net in _pbox_config["network"]:
         if net["plane"].lower() == "management" and net.get("ipaddr", None):
             check = 0
 
@@ -89,7 +83,7 @@ def isAccessible(_pbox_config, _docs_queue, _unavail_queue):
                 _unavail_queue.put(_msg)
 
 if __name__ == "__main__":
-    interval = 60 #in seconds
+    interval = 10 #in seconds
 
     file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.tower.collection.json")
     _setting = load_setting(file_path).get("vCenter", None)
@@ -104,66 +98,69 @@ if __name__ == "__main__":
                             password=_mongo_setting["userPassword"], 
                             authSource=_mongo_setting["authDb"])
 
-    db = _mongo_cli[_mongo_setting["userDb"]]
-    conf_col = db[_mongo_setting["collectionMap"]["pBoxConfig"]]
-    status_col = db[_mongo_setting["collectionMap"]["pvBoxStatus"]]
+    db = _mongo_cli[_mongo_setting["multiviewDb"]]
+    conf_col = db[_mongo_setting["collectionMap"]["boxConfig"]]
+    status_col = db[_mongo_setting["collectionMap"]["boxStatus"]]
 
     try:
         while True:
             begin = datetime.now()
+
             procs = list()
-            docs_queue = Queue()
+            avail_queue = Queue()
             unavail_queue = Queue()
 
-            for pbox_config in conf_col.find():
-                proc = Process(target=isAccessible, args=(pbox_config, docs_queue, unavail_queue,))
+            for box_config in conf_col.find():
+                if box_config["tier"].split(".")[-1] in ["vbox", "cbox", "vcbox"]:
+                    continue
+
+                proc = Process(target=isAccessible, args=(box_config, avail_queue, unavail_queue,))
                 procs.append(proc)
                 proc.start()
 
                 for proc in procs:
                     proc.join()
 
-            _msg = {"name": pbox_config["name"], "where": pbox_config["where"]}
-            unavail_queries = list()
+            _msg = {"name": box_config["name"], "where": box_config["where"]}
+
             while not unavail_queue.empty():
                 unavail_box = unavail_queue.get()
                 # Set the status "INACTIVE" of the unavailable physical boxes                 
-                # delDocs = status_col.find_one_and_delete(matching)
-                newDoc = status_col.find_one_and_update(
+                updatedDoc = status_col.find_one_and_update(
                     filter={"name": unavail_box["name"], "where": unavail_box["where"]},
-                    update={ "$set": {"status": unavail_box["status"]}}
+                    update={ "$set": {"resource": unavail_box["resource"]}}
                 )
+                if updatedDoc:
+                    _logger.info("Set the status INACTIVE of the physical box: {}".format(updatedDoc))
 
                 # Set the status "INACTIVE" of all virtual boxes in the unavailable physical boxes
-                if newDoc:
-                    _logger.info("Set the status INACTIVE of the physical box: {}".format(newDoc))
-
                 where_val = "{}.{}".format(unavail_box["where"], unavail_box["name"])
                 vbox_docs = status_col.find({"where": where_val})
 
                 for vbox_doc in vbox_docs:
                     matching = {"name": vbox_doc["name"], "where": vbox_doc["where"]}
-                    newDoc = status_col.find_one_and_update(
+                    updatedDoc = status_col.find_one_and_update(
                         filter={"name": vbox_doc["name"], "where": vbox_doc["where"]},
-                        update={ "$set": {"status": 0}},
+                        update={ "$set": {"resource": 0}},
                         return_document=ReturnDocument.AFTER
                     )
 
-                    if newDoc:
-                        _logger.info("Set the status INACTIVE of the virtual box: {}".format(newDoc))
+                    if updatedDoc:
+                        _logger.info("Set the status INACTIVE of the virtual box: {}".format(updatedDoc))
 
 
-            while not docs_queue.empty():
-                pbox_doc = docs_queue.get()
-                oldDoc = status_col.find_one_and_update(
-                    filter={"name": pbox_doc["name"], "where": pbox_doc["where"]},
-                    update={ "$set": {"status": pbox_doc["status"]}})
+            while not avail_queue.empty():
+                avail_box = avail_queue.get()
+                updatedDoc = status_col.find_one_and_update(
+                    filter={"name": avail_box["name"], "where": avail_box["where"]},
+                    update={ "$set": {"resource": avail_box["resource"]}})
                     
-                if oldDoc:
-                    _logger.info("Find and update the matched doc: {}, {}, {}".format(pbox_doc["name"], pbox_doc["where"], pbox_doc["status"]))
+                if updatedDoc:
+                     _logger.info("Set the status ACTIVE of the physical box: {}".format(updatedDoc))
+
                 else:
-                    status_col.insert(pbox_doc)
-                    _logger.info("Insert a new doc: {}".format(pbox_doc))
+                    status_col.insert(avail_box)
+                    _logger.info("Insert a new doc: {}".format(avail_box))
 
             end = datetime.now()
             sleep_duration = interval - (end - begin).total_seconds()

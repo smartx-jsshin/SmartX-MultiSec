@@ -9,11 +9,13 @@ class OnionRing3DVisualizer{
 
         // Color definition for ring segments
         this.resourceColorPallete = [ 0xC0C0C0, 0xC0C0C0, 0x008000, 0x008000, 0x008000, 0xFFFF00, 0xFFFF00, 0x0000FF ] // Silver, Silver, Green, Green, Green, Yellow, Yellow, Blue
-        this.securityColorPallete = [ 0x808080, 0x00FF000, 0x66FF000, 0x99FF000, 0xCCFF000, 0xFFFF00, 0xFFCC00, 0xFF9900, 0xFF6600, 0xFF3300, 0xFF0000 ] // Gray, Green, Yellow, Red
+        this.securityColorPallete = [ 0xD0D0D0, 0x00FF000, 0x66FF000, 0x99FF000, 0xCCFF000, 0xFFFF00, 0xFFCC00, 0xFF9900, 0xFF6600, 0xFF3300, 0xFF0000 ] // DarkGray, WhiteGray, Green, Yellow, Red
+        this.fixedColorPallete = [0x505050];
         
         // Instance Attributes for onion-ring topology
         this.tierDef = null;
         this.pgTopo = null;
+        this.fixedTiers = ["tower", "core-cloud", "edge-cloud"];
         
         this.scene = null;      
         this.camera = null;
@@ -40,6 +42,17 @@ class OnionRing3DVisualizer{
         return radian;
     }
 
+    getTierNum(tierName){
+        var matchedTierNum = 0;
+        this.tierDef.some( function(tier, idx){
+            if (tier === tierName){
+                matchedTierNum = idx + 1;
+                return true;
+            }
+        });
+        return matchedTierNum;
+    }
+
     getCircleX(xCenter, radius, radian){
         const x = xCenter + radius * Math.cos(radian);
         //console.log("xCenter:" + xCenter + " x: " + x + " r:" + radius + " radian:" + radian);
@@ -54,7 +67,7 @@ class OnionRing3DVisualizer{
 
     getExtrudeSetting( ringHeight ){
         const extrudeSetting = { 
-            amount: ringHeight, 
+            depth: ringHeight, 
             bevelEnabled: true, 
             steps: 1, 
             bevelSize: 0, 
@@ -63,33 +76,68 @@ class OnionRing3DVisualizer{
         return extrudeSetting;
     }
 
-    createTextMesh ( txt, posX, posY, posZ ){
-        console.log("[createTextMesh]" + " txt: " + txt + " txtPosX: " + posX + " txtPosY: " + posY + " txtPosZ: " + posZ);
+    createTextMeshes (txt, posX, posY, posZ){
+        console.log("[createTextMeshes]" + " txt: " + txt + " txtPosX: " + posX + " txtPosY: " + posY + " txtPosZ: " + posZ);
 
         var loader = new THREE.FontLoader();
         var font = loader.parse(fontJSON);
-        console.log(font);
-        var txtGeometry = new THREE.TextGeometry( txt, {
-            font: font,
-            size: 1,
-            height: 0.5,
-            curveSegments: 12,
-            bevelEnabled: false,
-            bevelThickness: 0.1,
-            bevelSize: 0.1,
-            bevelSegments: 0.1
-        } );
-        txtGeometry.computeBoundingBox();
-        var xOffset = (txtGeometry.boundingBox.max.x - txtGeometry.boundingBox.min.x) * -0.5;
-        var yOffset = (txtGeometry.boundingBox.max.y - txtGeometry.boundingBox.min.y) * -0.5;
+        var txtPieces = [];
 
-        var txtMaterial = new THREE.MeshPhongMaterial({color:0x000000});
-        var txtMesh = new THREE.Mesh(txtGeometry, txtMaterial);
-        txtMesh.position.x = posX + xOffset;
-        txtMesh.position.y = posY + yOffset;
-        txtMesh.position.z = posZ;
+        if (txt.length > 7){
+            const ts = txt.split("-");
+            var txtPiece = ""
+            ts.forEach(t => {
+                if (txtPiece === ""){
+                    txtPiece = t;
+                }
+                else if ((txtPiece.length + t.length + 1) > 7){
+                    txtPieces.push(txtPiece);
+                    txtPiece = "-" + t;
+                }
+                else{
+                    txtPiece = txtPiece + "-" + t;
+                }
+            });
+            txtPieces.push(txtPiece);
+        } else{
+            txtPieces.push(txt);
+        }
 
-        return txtMesh;
+        var txtMeshes = [];
+        var txtYoffsets = [];
+        var offsetIdx = 0;
+
+        for (var i=txtPieces.length-1; i>= ((txtPieces.length-1) *-1); i=i-2 ) {
+            txtYoffsets.push( (0.5 * i) - 0.5 )
+        }
+
+        txtPieces.forEach(txtPiece => {
+            var txtGeometry = new THREE.TextGeometry( txtPiece, {
+                font: font,
+                size: 1,
+                height: 0.5,
+                curveSegments: 12,
+                bevelEnabled: false,
+                bevelThickness: 0.1,
+                bevelSize: 0.1,
+                bevelSegments: 0.1
+            } );
+            txtGeometry.computeBoundingBox();
+
+            var textWidth = txtGeometry.boundingBox.max.x - txtGeometry.boundingBox.min.x;
+            var textHeight = txtGeometry.boundingBox.max.y - txtGeometry.boundingBox.min.y;
+    
+            var txtMaterial = new THREE.MeshPhongMaterial({color:0x000000});
+            var txtMesh = new THREE.Mesh(txtGeometry, txtMaterial);
+            txtMesh.position.x = posX + (textWidth * -0.5);
+            txtMesh.position.y = posY + (textHeight * (txtYoffsets[offsetIdx]*1.2));
+            txtMesh.position.z = posZ;
+            txtMeshes.push(txtMesh);
+
+            offsetIdx = offsetIdx + 1;
+        });
+
+        return txtMeshes;
     }
 
     createCenterCircle( layerNum, pieceColor, height, pieceName ){
@@ -103,17 +151,29 @@ class OnionRing3DVisualizer{
         centerCircleShape.moveTo(0, 0);
         centerCircleShape.absarc(0, 0, radius, this.degreeToRadian(0), this.degreeToRadian(360), false);
 
+        // Create object abstract
         const extrudeSetting = this.getExtrudeSetting(height);
         const geometry = new THREE.ExtrudeGeometry( centerCircleShape, extrudeSetting );
+
+        // Create boundary line of the object
+        const edges = new THREE.EdgesGeometry( geometry );
+        const line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) );
+        this.scene.add(line);
+
+        // Create actual shape of the object
         const centerCircleMesh = new THREE.Mesh ( geometry, new THREE.MeshPhongMaterial( { color: pieceColor }) );
         centerCircleMesh.name = pieceName;
 
+        // Create texts drawn on the object
         const txtPosX = 0
         const txtPosY = 0
         const txtPosZ = height + 1;
         const txtRotation = 0;
-        const txtMesh = this.createTextMesh(pieceName, txtPosX, txtPosY, txtPosZ);
-        centerCircleMesh.add(txtMesh);
+        const txtMeshes = this.createTextMeshes(pieceName, txtPosX, txtPosY, txtPosZ);
+
+        txtMeshes.forEach(txtMesh => {
+            centerCircleMesh.add(txtMesh);
+        });
 
         return centerCircleMesh;
     }
@@ -137,8 +197,16 @@ class OnionRing3DVisualizer{
         ringPieceShape.absarc(0, 0, outerRadius, endRadian, startRadian, true);
         ringPieceShape.lineTo(this.getCircleX(0, innerRadius, startRadian), this.getCircleY(0, innerRadius, startRadian));
 
+        // Create 3D object
         const extrudeSetting = this.getExtrudeSetting(height);
         const geometry = new THREE.ExtrudeGeometry( ringPieceShape, extrudeSetting );
+
+        // Create boundary line of the object
+        const edges = new THREE.EdgesGeometry( geometry );
+        const line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 5 } ) );
+        this.scene.add(line);
+
+        // Create actual shape of the object
         var ringPieceMesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: pieceColor } ) );
         ringPieceMesh.name = pieceName;
 
@@ -147,8 +215,14 @@ class OnionRing3DVisualizer{
         const txtPosX = this.getCircleX(0, midRadius, midRadian);
         const txtPosY = this.getCircleY(0, midRadius, midRadian);
         const txtPosZ = height + 1;
-        const txtMesh = this.createTextMesh(pieceName, txtPosX, txtPosY, txtPosZ);
-        ringPieceMesh.add(txtMesh);
+        // const txtMesh = this.createTextMesh(pieceName, txtPosX, txtPosY, txtPosZ);
+        const txtMeshes = this.createTextMeshes(pieceName, txtPosX, txtPosY, txtPosZ);
+        
+        txtMeshes.forEach(txtMesh => {
+            ringPieceMesh.add(txtMesh);
+        });
+
+        
 
         return ringPieceMesh;
     }
@@ -162,40 +236,36 @@ class OnionRing3DVisualizer{
         var curStartDegree = startDegree;
         var curEndDegree = startDegree + degreePerElem;
 
-        console.log("curElemCount: " + curElemCount + " degreePerElem: " + degreePerElem);
-
-        console.log("listVar");
-        console.log(listVar);
+        console.log("[drawRingSegments]", "RingSegments", listVar);
 
         listVar.forEach(curElem => {
             //
             // Calculate the height and the color of a ring piece
             //
-            console.log("curElem");
-            console.log(curElem);
-
             var pieceColor, height, layerNum;
+
+            
             if ("securityLevel" in curElem){
                 height = (curElem.securityLevel) / 10 * this.pieceHeightScale + this.defaultHeight;
+
                 var palleteIdx = Math.ceil( (curElem.securityLevel) / (100 / (this.securityColorPallete.length - 1)) );
                 if (palleteIdx == 0) palleteIdx = 1;
+
                 pieceColor = this.securityColorPallete[palleteIdx];
             } else {
                 height = this.defaultHeight;
-                pieceColor = this.securityColorPallete[0];
+                if (this.fixedTiers.includes(curElem.tier)){
+                    pieceColor = this.fixedColorPallete[0];
+                } else{
+                    pieceColor = this.securityColorPallete[0];
+                }
             }
-            console.log("height: " + height + " palleteIdx: " + palleteIdx);
 
             //
             // Get the tier of this element from the definition
             //
-            if (curElem.tier in this.tierDef){
-                layerNum = this.tierDef[curElem.tier];
-            } else{
-                layerNum = 0
-            }
-
-            console.log("[drawRingSegments]" + " name: "+ curElem.name + "curStartDegree: " + curStartDegree + " curEndDegree: " + curEndDegree + " height: " + height + " layerNum: " + layerNum);
+            layerNum = this.getTierNum(curElem.tier);
+            console.log("[drawRingSegments]" + " name: "+ curElem.name + "curStartDegree: " + curStartDegree + " curEndDegree: " + curEndDegree + " degreePerElem: " + degreePerElem + " height: " + height + " layerNum: " + layerNum);
 
             //
             // Create a visualization piece
@@ -216,8 +286,6 @@ class OnionRing3DVisualizer{
             if (curElem.childElements){
                 var children = {};
                 curElem.childElements.forEach(childElement => {
-                    console.log("childElement");
-                    console.log(childElement);
                     if (childElement.tier in children){
                         children[childElement.tier].push(childElement);
                     } else {
@@ -226,7 +294,6 @@ class OnionRing3DVisualizer{
                     }
                 });
                 
-                console.log(children);
                 Object.keys(children).forEach(nextTierName => {
                     this.drawRingSegments(children[nextTierName], curStartDegree, curEndDegree);
                 })
@@ -285,17 +352,6 @@ class OnionRing3DVisualizer{
         var controls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
 
         this.animate();
-    }
-
-    httpGetAsync(theUrl, callback)
-    {
-        var xmlHttp = new XMLHttpRequest();
-        xmlHttp.onreadystatechange = function() { 
-            if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
-                callback(xmlHttp.responseText);
-        }
-        xmlHttp.open("GET", theUrl, true); // true for asynchronous 
-        xmlHttp.send(null);
     }
 }
 

@@ -50,10 +50,10 @@ module.exports = function(provider){
 		});
 		res.flushHeaders(); // flush the headers to establish SSE with client
 	
-		const mongoCol = await resourceProvider.getMongoStatusCollection("box-status");
+		const mongoCol = await resourceProvider.getMongoSecLevelCollection("multi-sec-boxes");
 		var boxStatusList = await mongoCol.find().toArray();
 
-		console.log(mongoCol);
+		// console.log(mongoCol);
 
 		const changeStream = mongoCol.watch({ fullDocument: 'updateLookup' });
 		changeStream.on("change", (changeEvent) => { 
@@ -79,7 +79,13 @@ module.exports = function(provider){
 				delete respMsg["_id"];
 				respMsg.operationType = changeEvent.operationType;
 
-			} else{
+			} 
+			else if(changeEvent.operationType === "update"){
+				respMsg = changeEvent.fullDocument;
+				delete respMsg["_id"];
+				respMsg.operationType = changeEvent.operationType;
+			}
+			else{
 				// boxStatusList.some(function (boxStatus, idx) {
 				// 	if (boxStatus["_id"] === changeEvent.documentKey["_id"]){				
 				// 		boxStatusList.splice(idx, 1);
@@ -97,7 +103,9 @@ module.exports = function(provider){
 				delete respMsg["_id"];
 				respMsg.operationType = changeEvent.operationType;
 			}
-			res.write(`data: ${JSON.stringify({msg: respMsg})} \n\n`);
+			// res.write(`data: ${JSON.stringify({msg: respMsg})} \n\n`);
+			res.write(`data: ${JSON.stringify(respMsg)} \n\n`);
+
 		});
 
 		setTimeout(function(){

@@ -16,6 +16,8 @@ class OnionRing3DVisualizer{
         this.tierDef = null;
         this.pgTopo = null;
         this.fixedTiers = ["tower", "core-cloud", "edge-cloud"];
+
+        this.ringBuildParameters = {};
         
         this.scene = null;      
         this.camera = null;
@@ -75,6 +77,63 @@ class OnionRing3DVisualizer{
             curveSegments: 100 };
         return extrudeSetting;
     }
+
+    // For Dynamic Ring Update
+
+    removeRingPiece(pieceName){
+        // getByObjectName
+        var pieceOld = this.scene.getObjectByName(pieceName.toLowerCase());
+
+        // remove from ringBuildParameters object
+        delete this.ringBuildParameters[pieceName];
+
+        // remove from scene
+        this.scene.remove(pieceOld);
+
+        // this.animate();
+    }
+
+    updateRingPieceSecurirtyLevel(pieceName, secLevel){
+        // get the object by name
+        var pieceOld = this.scene.getObjectByName(pieceName.toLowerCase());
+        var pieceParameter = this._getRingBuildParameters(pieceName);
+        console.log(pieceParameter);
+
+        // create a new piece
+        var pieceNewHeight = secLevel / 10 * this.pieceHeightScale + this.defaultHeight;
+        if (pieceNewHeight === pieceParameter.height) return
+
+        var palleteIdx = Math.ceil( (secLevel) / (100 / (this.securityColorPallete.length - 1)) );
+        if (palleteIdx == 0) palleteIdx = 1;
+        var pieceNewColor = this.securityColorPallete[palleteIdx];
+
+
+        var pieceNew = this.createRingPiece(pieceParameter.layerNum, pieceNewColor, pieceNewHeight, pieceParameter.startDegree, pieceParameter.endDegree, pieceName);
+        pieceParameter.height = pieceNewHeight;
+        
+        // remove the old piece and add the new piece in the scene
+        this.scene.remove(pieceOld);
+        this.scene.add(pieceNew);
+
+        // animate
+        // this.animate();
+    }
+
+    _addRingBuildParameters(_layerNum, _pieceColor, _height, _startDegree, _endDegree, _pieceName){
+        const segmentObj = {
+            layerNum: _layerNum, 
+            pieceColor: _pieceColor, 
+            height: _height, 
+            startDegree: _startDegree, 
+            endDegree: _endDegree
+        };
+        this.ringBuildParameters[_pieceName.toLowerCase()] = segmentObj;
+    }
+
+    _getRingBuildParameters(pieceName){
+        return this.ringBuildParameters[pieceName];
+    }
+
 
     createTextMeshes (txt, posX, posY, posZ){
         console.log("[createTextMeshes]" + " txt: " + txt + " txtPosX: " + posX + " txtPosY: " + posY + " txtPosZ: " + posZ);
@@ -155,14 +214,15 @@ class OnionRing3DVisualizer{
         const extrudeSetting = this.getExtrudeSetting(height);
         const geometry = new THREE.ExtrudeGeometry( centerCircleShape, extrudeSetting );
 
+        // Create actual shape of the object
+        const centerCircleMesh = new THREE.Mesh ( geometry, new THREE.MeshPhongMaterial( { color: pieceColor }) );
+        centerCircleMesh.name = pieceName.toLowerCase();
+
         // Create boundary line of the object
         const edges = new THREE.EdgesGeometry( geometry );
         const line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) );
-        this.scene.add(line);
-
-        // Create actual shape of the object
-        const centerCircleMesh = new THREE.Mesh ( geometry, new THREE.MeshPhongMaterial( { color: pieceColor }) );
-        centerCircleMesh.name = pieceName;
+        // this.scene.add(line);
+        centerCircleMesh.add(line);
 
         // Create texts drawn on the object
         const txtPosX = 0
@@ -201,14 +261,9 @@ class OnionRing3DVisualizer{
         const extrudeSetting = this.getExtrudeSetting(height);
         const geometry = new THREE.ExtrudeGeometry( ringPieceShape, extrudeSetting );
 
-        // Create boundary line of the object
-        const edges = new THREE.EdgesGeometry( geometry );
-        const line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 5 } ) );
-        this.scene.add(line);
-
         // Create actual shape of the object
         var ringPieceMesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: pieceColor } ) );
-        ringPieceMesh.name = pieceName;
+        ringPieceMesh.name = pieceName.toLowerCase();
 
         const midRadius = (outerRadius + innerRadius) / 2;
         const midRadian = (endRadian + startRadian) / 2;
@@ -217,17 +272,20 @@ class OnionRing3DVisualizer{
         const txtPosZ = height + 1;
         // const txtMesh = this.createTextMesh(pieceName, txtPosX, txtPosY, txtPosZ);
         const txtMeshes = this.createTextMeshes(pieceName, txtPosX, txtPosY, txtPosZ);
-        
+
+        // Create boundary line of the object
+        const edges = new THREE.EdgesGeometry( geometry );
+        const line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 5 } ) );
+        ringPieceMesh.add(line);
+
         txtMeshes.forEach(txtMesh => {
             ringPieceMesh.add(txtMesh);
         });
 
-        
-
         return ringPieceMesh;
     }
 
-    drawRingSegments(listVar, startDegree, endDegree){
+    drawRingSegments(listVar, startDegree, endDegree, where){
         // Implementing Main Logic
         // Layer, Start Radian, End Radian
         var curElemCount = listVar.length;
@@ -277,6 +335,7 @@ class OnionRing3DVisualizer{
                 this.scene.add(center);
             } else {
                 const piece = this.createRingPiece(layerNum, pieceColor, height, curStartDegree, curEndDegree, curElem.name);
+                this._addRingBuildParameters(layerNum, pieceColor, height, curStartDegree, curEndDegree, curElem.name);
                 this.scene.add(piece);
             }
 
@@ -295,7 +354,7 @@ class OnionRing3DVisualizer{
                 });
                 
                 Object.keys(children).forEach(nextTierName => {
-                    this.drawRingSegments(children[nextTierName], curStartDegree, curEndDegree);
+                    this.drawRingSegments(children[nextTierName], curStartDegree, curEndDegree, where.concat('.', curElem.name));
                 })
             }
             
@@ -313,10 +372,6 @@ class OnionRing3DVisualizer{
         // this.render();
     }
     
-    render() {
-        this.renderer.render( this.scene, this.camera );
-    }
-
     draw(){
         // Basic ThreeJS Configuration (Scene, Camera, Light)
         if (this.scene === null){ this.scene = new THREE.Scene(); }
@@ -330,7 +385,7 @@ class OnionRing3DVisualizer{
         }
 
         this.pgTopo.forEach(element =>{
-            this.drawRingSegments(element, 0, 360);
+            this.drawRingSegments(element, 0, 360, "");
         });
 
         // Rendering Configuration
@@ -361,10 +416,15 @@ vis.draw();
 
 const source = new EventSource('/onionring/onionring3d/update');
 source.addEventListener('message', function(message) {
-    console.log('I have got a message', message);
-    // var piece = vis.scene.getObjectByName("K-ONE");
-    // console.log(vis.scene);
-    // console.log(piece);
-    // vis.scene.remove(piece);
-    // vis.animate();
+    // console.log('I have got a message', message.data);
+    var updateObj = JSON.parse(message.data);
+    console.log(updateObj);
+
+    if (updateObj.operationType === "update") {
+        vis.updateRingPieceSecurirtyLevel(updateObj.name.toLowerCase(), parseInt(updateObj.securityLevel));        
+    } else if (updateObj.operationType == "delete") {
+        vis.removeRingPiece(updateObj.name.toLowerCase());
+    }
+
+    vis.animate();
 });

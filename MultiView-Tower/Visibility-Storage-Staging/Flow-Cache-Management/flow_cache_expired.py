@@ -44,7 +44,7 @@ class ExpiredFlowCache:
         self._cache_cli = self._get_flow_cache_client(self._cache_cfg)
 
         # Define InfluxDB Message Format
-        self._tag_map = ["where", "dip", "sip", "dport", "sport", "proto"]
+        self._tag_map = ["point", "dip", "sip", "dport", "sport", "proto"]
 
         self._field_map = ["start_ts", "last_ts", "pkt_cnt", 
                     "pkt_bytes_total", "pkt_bytes_sqr_total", "pkt_bytes_min", "pkt_bytes_max",
@@ -94,17 +94,15 @@ class ExpiredFlowCache:
 
                 _idle_flows = self._read_idle_flows(ts)
                 if len(_idle_flows) > 0:
-                    self._delete_idle_flows(ts)
                     _msg = self._format_influx_msgs(_idle_flows, self._expired_table_name)
                     self._cache_cli.write_points(_msg, database=self._cache_db_name, time_precision='u')
-                    self._logger.info("Deleted idle flows: {}".format(_msg))
+                    self._delete_idle_flows(ts)
 
                 _fin_flows = self._read_flows_with_fin()
                 if len(_fin_flows):
                     self._delete_fin_flows(_fin_flows)
                     _msg = self._format_influx_msgs(_fin_flows, self._expired_table_name)
                     self._cache_cli.write_points(_msg, database=self._cache_db_name, time_precision='u')
-                    self._logger.info("Deleted flows having TCP FIN packets: {}".format(_msg))
 
 
                 # _active_flows = self._read_all_flows(self._active_table_name)
@@ -165,7 +163,7 @@ class ExpiredFlowCache:
             flow_tags = {}
             for t in self._tag_map:
                 flow_tags[t] = fin_flow[t]
-            _query = 'DELETE FROM "{}" WHERE "where"=$where AND dip=$dip AND sip=$sip AND dport=$dport AND sport=$sport AND proto=$proto'.format(self._active_table_name)
+            _query = 'DELETE FROM "{}" WHERE point=$point AND dip=$dip AND sip=$sip AND dport=$dport AND sport=$sport AND proto=$proto'.format(self._active_table_name)
             _res = self._cache_cli.query(_query, bind_params=flow_tags, database=self._cache_db_name)
 
     def _format_influx_msgs(self, flows, table_name):

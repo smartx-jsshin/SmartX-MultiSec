@@ -325,10 +325,10 @@ class ResourceProvider {
 
 		multisec.forEach(box => {
 			const whereList = box.where.split(".");
-			const tierList = box.tier.split("-");
+			const tierList = box.tier.split(".");
 
 			var isPhysical = true;
-			if (tierList[tierList.length - 1] == "virtual"){
+			if (tierList[tierList.length - 1] === "vcbox"){
 				isPhysical = false;
 				whereList.pop(whereList.length -1);
 			}
@@ -404,6 +404,13 @@ class ResourceProvider {
 		return collection;
 	}
 
+	async getMongoSecLevelCollection(){
+		var mongoClient = await new MongoClient(this.mongoUrl, { useUnifiedTopology: true }).connect();
+		var multiviewDb = mongoClient.db(this.mongoConfig.multiviewDb);
+		var collection = multiviewDb.collection(this.mongoConfig.collectionMap.multiSecBoxes);
+		return collection;
+	}
+	
 	//
 	// For Onion-ring 2D Visualization
 	//

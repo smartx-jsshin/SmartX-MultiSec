@@ -43,7 +43,7 @@ class ActiveFlowCache:
         self._cache_cli = self._get_flow_cache_client(self._cache_cfg)
 
         # Define InfluxDB Message Format
-        self._tag_map = ["where", "dip", "sip", "dport", "sport", "proto"]
+        self._tag_map = ["point", "dip", "sip", "dport", "sport", "proto"]
 
         self._field_map = ["start_ts", "last_ts", "pkt_cnt", 
                     "pkt_bytes_total", "pkt_bytes_sqr_total", "pkt_bytes_min", "pkt_bytes_max",
@@ -78,21 +78,20 @@ class ActiveFlowCache:
 
     def run(self):
         self._logger.info("Flow Cache Manager - Active Flows started")
-        _last_ts = 0
         try:
             while True:
                 _start_time = time.time()
-                _cur_ts = decimal.Decimal((_start_time - self._query_time_offset) * (10 ** 9))
+                _ts = decimal.Decimal((_start_time - self._query_time_offset) * (10 ** 9))
                 
-                _raw_flows = self._read_all_flows(self._raw_table_name, _cur_ts)
+                _raw_flows = self._read_all_flows(self._raw_table_name, _ts)
 
                 if len(_raw_flows) != 0:
                     self._logger.debug("raw flows: {}". format(_raw_flows))
-                    self._delete_all_flows(self._raw_table_name, _cur_ts)
+                    self._delete_all_flows(self._raw_table_name, _ts)
                     _raw_flows = self._aggregate_raw_flows(_raw_flows)
                     self._logger.debug("combined raw flows: {}".format(_raw_flows))
 
-                    _active_flows = self._read_all_flows(self._active_table_name, _cur_ts)
+                    _active_flows = self._read_all_flows(self._active_table_name, _ts)
                     self._logger.debug("existing active flows: {}". format(_active_flows))
 
                     _new_active_flows = self._combine_fields_active_to_raw(_active_flows, _raw_flows)
@@ -101,10 +100,9 @@ class ActiveFlowCache:
                     _msg = self._format_influx_msgs(_new_active_flows, self._active_table_name)
                     self._delete_flows_matching_tuples(_msg, self._active_table_name)
 
+                    self._logger.debug("formatted influx messages: {}".format(_msg))
                     self._cache_cli.write_points(_msg, database=self._cache_db_name, time_precision='u')
-                    self._logger.info("Stored to active flow cache: {}".format(_msg))
-                
-                # _last_ts = _cur_ts
+
                 _end_time = time.time()
                 _next_interval = self._interval - (_end_time - _start_time)
                 if _next_interval > 0:
@@ -113,40 +111,43 @@ class ActiveFlowCache:
         except KeyboardInterrupt:
             self._logger.info("Terminated by keyboard interrupt")
 
-    def _read_all_flows(self, table_name, cur_ts):
-        _query = 'SELECT * FROM "{}" WHERE time <= {}'.format(table_name, cur_ts)
+    def _read_all_flows(self, table_name, ts):
+        _query = 'SELECT * FROM "{}" WHERE time < {}'.format(table_name, ts)
         _res = self._cache_cli.query(_query, database=self._cache_db_name)
 
-        _flows = list(_res.get_points(measurement=table_name))
-        return _flows
-
-    def _delete_all_flows(self, table_name, cur_ts):
-        _query = 'DELETE FROM "{}" WHERE time <= {}'.format(table_name, cur_ts)
+        _raw_flows = list(_res.get_points(measurement=table_name))
+        return _raw_flows
+    
+    def _delete_all_flows(self, table_name, ts):
+        _query = 'DELETE FROM "{}" WHERE time < {}'.format(table_name, ts)
         self._cache_cli.query(_query, database=self._cache_db_name)
         # self._cache_cli.delete_series(database=self._cache_db_name, measurement=table_name)
 
     def _aggregate_raw_flows(self, raw_flows):
         _aggregated_dict = {}
         self._logger.info("# raw flows {}".format(len(raw_flows)))
+        num_loop = 0
         for rf in raw_flows:
+            num_loop += 1
             # raw_flows.remove(rf)
 
             _tags = {}
             for _tkey in self._tag_map:
                 _tags[_tkey] = rf[_tkey]
-            _flow_id = json.dumps(_tags)
+            _tags = json.dumps(_tags)
 
-            _matched = _aggregated_dict.get(_flow_id, None)
+            _matched = _aggregated_dict.get(_tags, None)
             if _matched:
-                self._logger.debug("HIT: {}".format(_flow_id))
+                self._logger.info("HIT: {}".format(_tags))
                 self._combine_fields_of_two_flows(_matched, rf)
             else:
                 _fields = {}
                 for _fkey in self._field_map:
                     _fields[_fkey] = rf[_fkey]
-                # _fields["time"] = rf["time"]
-                _aggregated_dict[_flow_id] = _fields
-        # self._logger.info("# aggregated dict {}".format(len(_aggregated_dict)))
+                _fields["time"] = rf["time"]
+                _aggregated_dict[_tags] = _fields
+        self._logger.info("num_loop: {}".format(num_loop))
+        self._logger.info("# aggregated dict {}".format(len(_aggregated_dict)))
 
         _aggregated_list = []
 
@@ -156,7 +157,7 @@ class ActiveFlowCache:
             _tags.update(v)
             _aggregated_list.append(_tags)
 
-        # self._logger.info("# aggregated list {}".format(len(_aggregated_dict)))
+        self._logger.info("# aggregated list {}".format(len(_aggregated_dict)))
 
 
         return _aggregated_list
@@ -167,13 +168,11 @@ class ActiveFlowCache:
 
             for af in active_flow:
 
-                if rf["where"] == af["where"] and \
+                if rf["point"] == af["point"] and \
                     rf["dip"] == af["dip"] and rf["sip"] == af["sip"] and \
                     rf["dport"] == af["dport"] and rf["sport"] == af["sport"] and \
                     rf["proto"] == af["proto"]:
 
-                    if rf["last_ts"] - af["start_ts"] > 18000000000:
-                        continue
                     active_flow.remove(af)
                     self._combine_fields_of_two_flows(rf, af)
 
@@ -226,8 +225,8 @@ class ActiveFlowCache:
             else:
                 self._logger.debug("Unknwon Key in field_map: {}".format(k))
         
-        # if target["time"] < base["time"]:
-        #     target["time"] = base["time"]
+        if target["time"] < base["time"]:
+            target["time"] = base["time"]
 
 
     def _format_influx_msgs(self, flows, table_name):
@@ -236,7 +235,7 @@ class ActiveFlowCache:
         for f in flows:
             _msg = {}
             _msg["measurement"] = table_name
-            # _msg["time"] = f["time"]
+            _msg["time"] = f["time"]
             
             _tags = {}
             for _tkey in self._tag_map:

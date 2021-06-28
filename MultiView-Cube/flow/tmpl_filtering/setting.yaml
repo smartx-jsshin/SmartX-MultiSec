@@ -1,0 +1,12 @@
+function_name: eno7_filter
+networking_point: eno7
+where: gj.k1-gj1-cube1
+xdp_mode: generic
+api_port: 55550
+
+rules:
+  - dest_ip: "172.30.91.221"
+    src_ip: "172.30.91.222"
+    dest_port: 0
+    src_port: 0
+    proto: 1

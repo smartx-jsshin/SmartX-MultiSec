@@ -1,0 +1,4 @@
+pytz
+PyYAML
+kafka-python
+uptime

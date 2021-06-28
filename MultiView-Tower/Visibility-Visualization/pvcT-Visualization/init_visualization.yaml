@@ -1,0 +1,11 @@
+---
+## Initialization Steps
+## 1. Install NodeJS
+## 2. Install NPM
+## 3. Install pm2
+## 4. Install Javascript pacakges listed in package.json
+## 5. Ensure MongoDB is working
+## 6. Insert MongoDB documents for user accounts of the dashboard
+## 7. Insert a playground topology to MongoDB
+## 8. Ensure InfluxDB is working
+## 9. Execute server.js using pm2

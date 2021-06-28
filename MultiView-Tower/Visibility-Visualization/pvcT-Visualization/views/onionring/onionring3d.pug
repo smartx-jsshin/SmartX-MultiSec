@@ -1,0 +1,15 @@
+html
+  head
+    title=title
+    script(type="text/javascript", src="/public/libs/threejs/three.js")
+    script(type="text/javascript", src="/public/libs/threejs/meshline.js")
+    script(type="text/javascript", src="/public/libs/threejs/OrbitControls.js")
+    script(type="text/javascript", src="/public/libs/threejs/topology.js")
+    script(type="text/javascript", src="/public/libs/threejs/helvetiker_regular.typeface.js")
+  body
+    script(type='text/javascript').
+      var onionRing3DData="#{onionRing3DData}"
+      //- console.log("onionRing3DData")
+      //- console.log(onionRing3DData)
+
+    script(type='module', src="/public/javascripts/onionring/onion3dGraph.js")

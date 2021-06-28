@@ -1,0 +1,208 @@
+{
+    "type": "2d",
+
+    "playground_topology": 
+    {
+        "name": "K-ONE",
+        "description": "K-ONE Open Playground",
+        "statusColor": "white",
+        "tenantColor": "LightGrey",
+        "contains": [
+            {
+                "name": "K1-P-Center",
+                "description": "Provisioning and Orchestration Center",
+                "sublayer": []
+            },
+            {
+                "name": "K1-V-Center",
+                "description": "Visibility and Security Center",
+                "sublayer": []
+            }
+        ],
+        "sublayer": [
+            {
+                "name": "GJ",
+                "description": "GIST Site",
+                "statusColor": "white",
+                "tenantColor": "LightGrey",
+                "sublayer": [
+                    {
+                        "name": "K1-GJ1-Post",
+                        "description": "K-Post in GIST",
+                        "contains": [],
+                        "sublayer": [
+                            {
+                                "name": "K1-GJ1-Cube1",
+                                "description": "K-Cube1 in GIST",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-GJ1-Cube2",
+                                "description": "K-Cube2 in GIST",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-GJ1-Cube3",
+                                "description": "K-Cube3 in GIST",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-GJ1-Cube4",
+                                "description": "K-Cube4 in GIST",
+                                "contains": [],
+                                "sublayer": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "KU",
+                "description": "Korea Univeristy Site",
+                "statusColor": "white",
+                "tenantColor": "LightGrey",
+                "sublayer": [
+                    {
+                        "name": "K1-KU1-Post",
+                        "description": "K-Post in KU",
+                        "contains": [],
+                        "sublayer": [
+                            {
+                                "name": "K1-KU1-Cube1",
+                                "description": "K-Cube1 in KU",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-KU1-Cube2",
+                                "description": "K-Cube2 in KU",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-KU1-Cube3",
+                                "description": "K-Cube3 in KU",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-KU1-Cube4",
+                                "description": "K-Cube4 in KU",
+                                "contains": [],
+                                "sublayer": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "SSU",
+                "description": "Soongsil University Site",
+                "statusColor": "white",
+                "tenantColor": "LightGrey",
+                "sublayer": [
+                    {
+                        "name": "K1-SSU1-Post",
+                        "description": "K-Post in SSU",
+                        "contains": [],
+                        "sublayer": [
+                            {
+                                "name": "K1-SSU1-Cube1",
+                                "description": "K-Cube1 in SSU",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-SSU1-Cube2",
+                                "description": "K-Cube2 in SSU",
+                                "contains": [],
+                                "sublayer": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "PO",
+                "description": "POSTECH Site",
+                "statusColor": "white",
+                "tenantColor": "LightGrey",
+                "sublayer": [
+                    {
+                        "name": "K1-PO1-Post",
+                        "description": "K-Post in POSTECH",
+                        "contains": [],
+                        "sublayer": [
+                            {
+                                "name": "K1-PO1-Cube1",
+                                "description": "K-Cube1 in PO",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-PO1-Cube2",
+                                "description": "K-Cube2 in PO",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-PO1-Cube3",
+                                "description": "K-Cube3 in PO",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-PO1-Cube4",
+                                "description": "K-Cube4 in PO",
+                                "contains": [],
+                                "sublayer": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "KA",
+                "description": "KAIST Site",
+                "statusColor": "white",
+                "tenantColor": "LightGrey",
+                "sublayer": [
+                    {
+                        "name": "K1-KA1-Post",
+                        "description": "K-Post in KAIST",
+                        "contains": [],
+                        "sublayer": [
+                            {
+                                "name": "K1-KA1-Cube1",
+                                "description": "K-Cube1 in KA",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-KA1-Cube2",
+                                "description": "K-Cube2 in KA",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-KA1-Cube3",
+                                "description": "K-Cube3 in KA",
+                                "contains": [],
+                                "sublayer": []
+                            },
+                            {
+                                "name": "K1-KA1-Cube4",
+                                "description": "K-Cube4 in KA",
+                                "contains": [],
+                                "sublayer": []
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

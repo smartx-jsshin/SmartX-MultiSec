@@ -1,0 +1,18 @@
+---
+  db_data_rootdir: /path/to/data/rootdir
+  db_config_rootdir: /path/to/config/rootdir
+
+  mongodb_published_port: 27017
+  mongodb_container_name: mvf-mongodb
+  mongodb_admin_id: mongoadmin
+  mongodb_admin_pw: mongoadmin
+
+  influxdb_published_port: 8086
+  influxdb_container_name: mvf-influxdb
+  influxdb_admin_id: influxadmin
+  influxdb_admin_pw: influxadmin
+
+  keydb_port: 6379
+  keydb_container_name: tower-keydb
+  keydb_pw: keydbadmin
+  keydb_peer_ip: 127.0.0.1 #p-center control plane

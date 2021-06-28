@@ -1,0 +1,172 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    meta(http-equiv="X-UA-Compatible" content="IE=edge")
+    meta(name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no")
+    meta(name="description" content="")
+    meta(name="author" content="")
+    title SmartX MultiView Visibility Framework (MVF) Dashboard
+
+    // Custom fonts for this template
+    link(href="/modules/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css")
+    link(href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet")
+    // Custom styles for this template
+    link(href="/public/css/sb-admin-2.min.css" rel="stylesheet")
+
+    script(type='text/javascript').
+        var vCenterHost="#{vCenterHost}";
+        var vCenterPort="#{vCenterPort}";
+        var rootUrl = "http://" + vCenterHost + ":" + vCenterPort;
+    
+    script(type='text/javascript' src="/public/javascripts/menuPage.js")
+
+  body#page-top(onload='draw()')
+    // Page Wrapper
+    #wrapper
+      // Sidebar
+      ul#accordionSidebar.navbar-nav.bg-gradient-primary.sidebar.sidebar-dark.accordion
+        // Sidebar - Brand
+        a.sidebar-brand.d-flex.align-items-center.justify-content-center(href="/menu")
+          .sidebar-brand-text.mx-1 SmartX Multi-View Framework
+
+        // Divider
+        hr.sidebar-divider
+
+        // Onion Ring
+        li.nav-item
+          a.nav-link.collapsed(href="#" data-toggle="collapse" data-target="#collapseOnion" aria-expanded="true" aria-controls="collapseOnion")
+            i.fas.fa-fw.fa-ring
+            span Onion-Ring
+          #collapseOnion.collapse(aria-labelledby="headingTwo" data-parent="#accordionSidebar")
+            .bg-white.py-2.collapse-inner.rounded
+              a#onion3d.collapse-item(href="#") Multi-Sec
+              a#onionops.collapse-item(href="#") Operator
+              a#oniontenant.collapse-item(href="#") Tenants
+        
+        // Divider
+        hr.sidebar-divider.my-0
+
+        // Playground Topology
+        li.nav-item
+          a.nav-link.collapsed(href="#" data-toggle="collapse" data-target="#collapseTopo" aria-expanded="true" aria-controls="collapseTopo")
+            i.fas.fa-fw.fa-bezier-curve
+            span Playground Topology
+          #collapseTopo.collapse(aria-labelledby="headingTwo" data-parent="#accordionSidebar")
+            .bg-white.py-2.collapse-inner.rounded
+              a#tcptopology.collapse-item(href="#") TCP Topology
+              a#sitetopology.collapse-item(href="#") Site Topology
+        
+        // Divider
+        hr.sidebar-divider.mt-0.mb-2
+        
+        // Heading
+        .sidebar-heading
+          | Layer Visualization
+        
+        // Resource Layer
+        li.nav-item
+          a.nav-link.collapsed(href="#" data-toggle="collapse" data-target="#collapseResource" aria-expanded="true" aria-controls="collapseResource")
+            i.fas.fa-fw.fa-cubes
+            span Resource-layer
+          #collapseResource.collapse(aria-labelledby="headingTwo" data-parent="#accordionSidebar")
+            .bg-white.py-2.collapse-inner.rounded
+              a#resourcecentricviewops.collapse-item(href="#") Network Topology
+              a#flowrulesviewops.collapse-item(href="#") Virtual Switch Flows
+              a#flowtracingviewops.collapse-item(href="#") Inter-connected Flow Path
+
+        // Slice Layer
+        li.nav-item
+          a.nav-link.collapsed(href="#" data-toggle="collapse" data-target="#collapseSlice" aria-expanded="true" aria-controls="collapseSlice")
+            i.fas.fa-fw.fa-layer-group
+            span Slicing-layer
+          #collapseSlice.collapse(aria-labelledby="headingTwo" data-parent="#accordionSidebar")
+            .bg-white.py-2.collapse-inner.rounded
+              a#slicingviewops.collapse-item(href="#") Infrastructure Slicing
+
+        // Flow Layer
+        li.nav-item
+          a.nav-link.collapsed(href="#" data-toggle="collapse" data-target="#collapseFlow" aria-expanded="true" aria-controls="collapseFlow")
+            i.fas.fa-fw.fa-cubes
+            span Flow-layer
+          #collapseFlow.collapse(aria-labelledby="headingTwo" data-parent="#accordionSidebar")
+            .bg-white.py-2.collapse-inner.rounded
+              a#flowmeasureviewops.collapse-item(href="#") Packet Sampling
+              a#flowiovisorviewops.collapse-item(href="#") Packet Tracing
+
+        // Workload Layer
+        li.nav-item
+          a.nav-link.collapsed(href="#" data-toggle="collapse" data-target="#collapseWorkload" aria-expanded="true" aria-controls="collapseWorkload")
+            i.fas.fa-fw.fa-tachometer-alt
+            span Workload-Layer
+          #collapseWorkload.collapse(aria-labelledby="headingTwo" data-parent="#accordionSidebar")
+            .bg-white.py-2.collapse-inner.rounded
+              a#servicecentricviewops.collapse-item(href="#") Workload-centric
+
+        // Divider
+        hr.sidebar-divider.mt-0.mb-2
+
+        // Documentation
+        li.nav-item
+          a.nav-link.collapsed(href="#" data-toggle="collapse" data-target="#collapseDocs" aria-expanded="true" aria-controls="collapseDocs")
+            i.fas.fa-fw.fa-book
+            span Documentations
+          #collapseDocs.collapse(aria-labelledby="headingTwo" data-parent="#accordionSidebar")
+            .bg-white.py-2.collapse-inner.rounded
+              a#userdoc_btn.collapse-item(href="#") User Guide
+              a#devdoc_btn.collapse-item(href="#") Developer Guide
+
+        // Sidebar Toggler (Sidebar)
+        .text-center.d-none.d-md-inline
+          button#sidebarToggle.rounded-circle.border-0
+      // End of Sidebar
+
+      // Content Wrapper
+      #content-wrapper.d-flex.flex-column
+        // Main Content
+        #content
+          // Begin Page Content
+          .my-4.container-fluid
+            // Page Heading
+            .d-sm-flex.align-items-center.justify-content-between.mb-4
+              h1.h3.mb-0.text-gray-800 Dashboard
+            .row
+              .h-auto
+                .card.shadow.mb-4
+                  // Card Header - Dropdown
+                  .card-header.py-3.d-flex.flex-row.align-items-center.justify-content-between
+                    h6#firstIFrameHeader.m-0.font-weight-bold.text-primary Onion-ring Visualization
+                  // Card Body
+                  .card-body.text-center
+                    iframe#firstIFrame(width="900" height="900")
+            //- .row
+            //-   .h-auto
+            //-     .card.shadow.mb-4
+            //-       // Card Header - Dropdown
+            //-       .card-header.py-3.d-flex.flex-row.align-items-center.justify-content-between
+            //-         h6#secondIFrameHeader.m-0.font-weight-bold.text-primary ABCD
+            //-       // Card Body
+            //-       .card-body.text-center
+            //-         iframe#secondIFrame(width="900" height="900")
+        // End of Main Content
+        
+        // Footer
+        footer.sticky-footer.bg-white
+          .container.my-auto
+            .copyright.text-center.my-auto
+              span Copyright © Networked Computing Systems Laboratory, GIST since 2019
+        // End of Footer
+      // End of Content Wrapper
+    // End of Page Wrapper
+
+    // Scroll to Top Button
+    a.scroll-to-top.rounded(href="#page-top")
+      i.fas.fa-angle-up
+
+    // Bootstrap core JavaScript
+    script(src="/modules/jquery/dist/jquery.min.js")
+    script(src="/modules/bootstrap/dist/js/bootstrap.bundle.min.js")
+    // Core plugin JavaScript
+    script(src="/modules/jquery.easing/jquery.easing.min.js")
+    // Custom scripts for all pages
+    script(src="/public/libs/sb-admin-2.min.js")

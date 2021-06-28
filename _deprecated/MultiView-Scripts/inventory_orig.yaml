@@ -1,0 +1,7 @@
+all:
+  hosts:
+    v-center:
+      ansible_host: 127.0.0.1
+      ansible_user: ansible
+      ansible_become: yes
+      control_plane_ip: 127.0.1.1

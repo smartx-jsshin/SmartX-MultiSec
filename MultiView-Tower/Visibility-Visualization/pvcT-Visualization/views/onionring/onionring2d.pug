@@ -1,0 +1,73 @@
+doctype html
+html
+  head
+    meta(charset='UTF-8')
+    title Onion-ring-style Visualization (Operator)
+    style(type='text/css').
+      .sdncontrollerdiv{
+      position: absolute;
+      top: 40px;
+      right: 30px;
+      width: 240px;
+      height: 135px;
+      font-size: 18px;
+      opacity: 0.7;
+      border: 1px solid #bfbfbf;
+      background: #f5f5ef;
+      }
+      .sdncontrollerheaddiv{
+      position: relative;
+      top: 5px;
+      left: 1px;
+      width: 230px;
+      height: 30px;
+      border: 1px solid #999999;
+      background: #ff1a66;
+      padding: 5px 0;
+      text-align: center;
+      }
+      .sdncontrollerbodydiv{
+      position: relative;
+      top: 5px;
+      left: 1px;
+      width: 230px;
+      height: 80px;
+      border: 1px solid #999999;
+      background: #ffffff;
+      overflow-y:scroll;
+      }
+      .controllertable {
+      width: 100%;
+      background-color: #f1f1c1;
+      }
+      .controllertable tr:nth-child(even) {
+      background-color: #eee;
+      }
+      .controllertable tr:nth-child(odd) {
+      background-color: #fff;
+      }
+      .controllertable th {
+      color: white;
+      background-color: black;
+      }
+
+    script(type='text/javascript', src='/public/libs/d3.v3.min.js')
+    script(type='text/javascript', src='/public/javascripts/onionring/psd3-mvf.js')
+
+    link(type='text/css', rel='stylesheet', href='/public/stylesheets/opentip.css')
+    link(rel='stylesheet', type='text/css', href='/public/stylesheets/psd3.css')
+    
+  body(style='margin: 15px;')
+    .container
+      #chartContainer.well
+    //- .sdncontrollerdiv
+    //-   .sdncontrollerheaddiv(style='color:white;font-family:verdana;text-align:center;') Plaground Controllers
+    //-   .sdncontrollerbodydiv
+    //-     table#controllertable(style='width:100%;color:black;text-align:center;')
+    //-       tbody
+
+    script(type='text/javascript').
+      var onionRingData="#{onionRingData}";
+      var controllerList="#{controllerList}";
+
+    script(type='text/javascript', src='/public/javascripts/onionring/onion2dGraph.js')

@@ -1,0 +1,238 @@
+{
+    "type": "3d-new",
+    
+    "tier_definition": [
+        "tower",
+        "tower.center",
+
+        "core-cloud",
+        "core-cloud.post",
+        "core-cloud.post.vcbox",
+        "core-cloud.cube",
+        "core-cloud.cube.vcbox",
+        
+        "edge-cloud",
+        "edge-cloud.post",
+        "edge-cloud.post.vcbox",
+        "edge-cloud.cube",
+        "edge-cloud.cube.vcbox"
+    ],
+    
+    "playground_topology": 
+    [
+        [
+            {
+                "name": "K-ONE",
+                "tier": "tower",
+                "childElements": [
+                    {
+                        "name": "P-center",
+                        "tier": "tower.center"
+                    },
+                    {
+                        "name": "V-center",
+                        "tier": "tower.center"
+                    }
+                ]
+            }
+        ],
+
+
+        [
+            {
+                "name": "netcs-lcoud",
+                "tier": "core-cloud",
+                "childElements": [
+                    {
+                        "name": "netcs-cloud-head",
+                        "tier": "core-cloud.post",
+                        "childElements": []
+                    },
+                    {
+                        "name": "netcs-cloud-1",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "netcs-cloud-2",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "netcs-cloud-3",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "netcs-cloud-4",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "netcs-cloud-5",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "netcs-cloud-6",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    }
+                ]
+            }
+        ],
+
+
+        [
+            {
+                "name": "GJ",
+                "tier": "edge-cloud",
+                "childElements": [
+                    {
+                        "name": "K1-GJ1-Post",
+                        "tier": "edge-cloud.post",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-GJ1-Cube1",
+                        "tier": "edge-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-GJ1-Cube2",
+                        "tier": "edge-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-GJ1-Cube3",
+                        "tier": "edge-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-GJ1-Cube4",
+                        "tier": "edge-cloud.cube",
+                        "childElements": []
+                    }
+                ]
+            },
+
+            {
+                "name": "KU",
+                "tier": "edge-cloud",
+                "childElements": [
+                    {
+                        "name": "K1-KU1-Post",
+                        "tier": "edge-cloud.post",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KU1-Cube1",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KU1-Cube2",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KU1-Cube3",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KU1-Cube4",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    }
+                ]
+            },
+
+            {
+                "name": "SSU",
+                "tier": "edge-cloud",
+                "childElements": [
+                    {
+                        "name": "K1-SSU1-Post",
+                        "tier": "edge-cloud.post",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-SSU1-Cube1",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-SSU1-Cube2",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    }
+                ]
+            },
+
+            {
+                "name": "PO",
+                "tier": "edge-cloud",
+                "childElements": [
+                    {
+                        "name": "K1-PO1-Post",
+                        "tier": "edge-cloud.post",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-PO1-Cube1",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-PO1-Cube2",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-PO1-Cube3",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-PO1-Cube4",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    }
+                ]
+            },
+
+            {
+                "name": "KA",
+                "tier": "edge-cloud",
+                "childElements": [
+                    {
+                        "name": "K1-KA1-Post",
+                        "tier": "edge-cloud.post",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KA1-Cube1",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KA1-Cube2",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KA1-Cube3",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    },
+                    {
+                        "name": "K1-KA1-Cube4",
+                        "tier": "core-cloud.cube",
+                        "childElements": []
+                    }
+                ]
+            }
+        ]
+    ]
+}

@@ -1,0 +1,32 @@
+{
+    "vCenter": {
+        "host": "127.0.0.1",
+        "port": "3011",
+        "authPort": "8080"
+    },
+    "playground": {
+        "cloudControllerHost": null,
+        "sdnControllerHost": null
+    },
+    "mongodb": {
+        "mongodbHost": "127.0.0.1",
+        "mongodbPort": "27017",
+        "multiviewDb": "kone-multiview",
+        "userId": "user",
+        "userPassword": "user",
+        "collectionMap": {
+            "users": "configuration-multiview-users",
+            "tcpTopology": "topolgoy-throughput-data-rt",
+            "playgroundTopology": "playground-topology"
+        }
+    },
+    "grafana": {
+        "port": "3000"
+    },
+    "kibana": {
+        "port": "5601"
+    },
+    "sflow-rt": {
+        "port": "8008"
+    }
+}

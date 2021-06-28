@@ -1,0 +1,9 @@
+wheel
+psutil
+kafka-python
+distro
+py-cpuinfo
+pytz
+netifaces
+# Ensure the ubuntu package "libvirt-dev" was installed.
+libvirt-python
